@@ -9,8 +9,6 @@ environment:
 dependencies:
   cryptography: ^2.7.0
   dart_frog: ^1.1.0
-  dart_frog_utilities:
-    path: ../../dart_frog_utilities
   equatable: ^2.0.7
   http: ^1.4.0
   json_annotation: ^4.9.0

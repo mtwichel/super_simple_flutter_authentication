@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:dart_frog_utilities/dart_frog_utilities.dart';
 import 'package:postgres_builder/postgres_builder.dart';
 import 'package:shared_authentication_objects/shared_authentication_objects.dart';
 import 'package:super_simple_authentication_server/src/create_jwt.dart';
 import 'package:super_simple_authentication_server/src/create_refresh_token.dart';
 import 'package:super_simple_authentication_server/src/integrations/integrations.dart';
+import 'package:super_simple_authentication_server/src/utilities.dart';
 
 /// [Handler] for signing in with a 3rd party credential.
 Handler signInWithCredentialHandler() {
@@ -31,11 +31,13 @@ Handler signInWithCredentialHandler() {
       );
     }
 
+    final environment = context.read<Environment>();
+
     final String email;
     switch (type) {
       case CredentialType.google:
         try {
-          final clientId = context.environment['GOOGLE_CLIENT_ID'];
+          final clientId = environment['GOOGLE_CLIENT_ID'];
           if (clientId == null || clientId.isEmpty) {
             return Response.json(
               statusCode: HttpStatus.internalServerError,
@@ -71,8 +73,8 @@ Handler signInWithCredentialHandler() {
         }
       case CredentialType.apple:
         try {
-          final bundleId = context.environment['APPLE_BUNDLE_ID'];
-          final serviceId = context.environment['APPLE_SERVICE_ID'];
+          final bundleId = environment['APPLE_BUNDLE_ID'];
+          final serviceId = environment['APPLE_SERVICE_ID'];
 
           if (bundleId == null || bundleId.isEmpty) {
             return Response.json(

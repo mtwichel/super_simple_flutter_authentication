@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
+import 'package:postgres/postgres.dart';
 import 'package:postgres_builder/postgres_builder.dart';
 
 late PostgresBuilder database;
@@ -32,7 +33,10 @@ Future<void> init(InternetAddress ip, int port) async {
     password: password,
   );
 
-  await temp.initialize(endpoint: endpoint);
+  await temp.initialize(
+    endpoint: endpoint,
+    settings: const ConnectionSettings(sslMode: SslMode.disable),
+  );
   database = temp;
 }
 

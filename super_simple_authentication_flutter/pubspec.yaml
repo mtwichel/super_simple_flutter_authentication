@@ -8,12 +8,11 @@ environment:
   flutter: ^3.24.0
 
 dependencies:
-  api_client:
-    path: ../../api_client
   equatable: ^2.0.7
   flutter:
     sdk: flutter
   flutter_secure_storage: ^9.2.4
+  http: ^1.5.0
   shared_authentication_objects:
     path: ../super_simple_authentication_server/packages/shared_authentication_objects
 

@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:dart_frog_utilities/dart_frog_utilities.dart';
 import 'package:postgres_builder/postgres_builder.dart';
 import 'package:shared_authentication_objects/shared_authentication_objects.dart';
 import 'package:super_simple_authentication_server/src/create_otp.dart';
 import 'package:super_simple_authentication_server/src/hash_otp.dart';
+import 'package:super_simple_authentication_server/src/utilities.dart';
 import 'package:super_simple_authentication_server/super_simple_authentication_server.dart';
 
 /// The duration the OTP will expire in.
@@ -30,9 +30,10 @@ Handler sendOtpHandler({bool debugOtps = false}) {
       ),
     );
 
-    final testingEmail = context.environment['TESTING_EMAIL'];
-    final testingPhoneNumber = context.environment['TESTING_PHONE_NUMBER'];
-    final testingOtp = context.environment['TESTING_OTP'];
+    final environment = context.read<Environment>();
+    final testingEmail = environment['TESTING_EMAIL'];
+    final testingPhoneNumber = environment['TESTING_PHONE_NUMBER'];
+    final testingOtp = environment['TESTING_OTP'];
 
     final usingTestOtp =
         (requestBody.identifier == testingEmail ||
