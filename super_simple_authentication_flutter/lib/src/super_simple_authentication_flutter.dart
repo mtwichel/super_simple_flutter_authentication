@@ -69,7 +69,7 @@ class SuperSimpleAuthentication {
       _makeUri(path),
     );
     request.headers.addAll(headers);
-    request.headers[HttpHeaders.contentTypeHeader] = 'application/json';
+    request.headers[HttpHeaders.contentTypeHeader] = ContentType.json.mimeType;
     if (body != null) {
       request.body = jsonEncode(body);
     }
