@@ -2,7 +2,7 @@
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:super_simple_authentication_server/src/utilities.dart';
+import 'package:super_simple_authentication_server/src/util/extensions.dart';
 import 'package:test/test.dart';
 
 class MockRequest extends Mock implements Request {}

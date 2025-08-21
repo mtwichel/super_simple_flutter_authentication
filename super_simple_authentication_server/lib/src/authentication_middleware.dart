@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:super_simple_authentication_server/src/user_id.dart';
+import 'package:super_simple_authentication_server/src/util/user_id.dart';
 
 /// Middleware that authenticates requests using a JWT.
 Handler authenticationMiddleware(Handler handler) {

@@ -2,12 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:postgres_builder/postgres_builder.dart';
 import 'package:shared_authentication_objects/shared_authentication_objects.dart';
-import 'package:super_simple_authentication_server/src/create_jwt.dart';
-import 'package:super_simple_authentication_server/src/create_refresh_token.dart';
-import 'package:super_simple_authentication_server/src/password_hashing.dart';
-import 'package:super_simple_authentication_server/src/utilities.dart';
+import 'package:super_simple_authentication_server/src/data_storage/data_storage.dart';
+import 'package:super_simple_authentication_server/src/util/util.dart';
 
 /// A handler for signing in with an email and password.
 Handler signInWithEmailPasswordHandler() {
@@ -19,24 +16,8 @@ Handler signInWithEmailPasswordHandler() {
       SignInWithEmailAndPasswordRequest.fromJson,
     );
 
-    final database = context.read<PostgresBuilder>();
-    final result = await database.mappedQuery(
-      Select(
-        [
-          const Column('password'),
-          const Column('salt'),
-          const Column('id', as: 'user_id'),
-        ],
-        from: 'users',
-        where: const Column('email').equals(requestBody.email),
-      ),
-      fromJson:
-          (row) => (
-            password: row['password'] as String,
-            salt: row['salt'] as String,
-            userId: row['user_id'] as String,
-          ),
-    );
+    final dataStorage = context.read<DataStorage>();
+    final result = await dataStorage.getUsersByEmail(requestBody.email);
 
     if (result.isEmpty) {
       return Response.json(
@@ -46,10 +27,29 @@ Handler signInWithEmailPasswordHandler() {
       );
     }
 
-    final userId = result.first.userId;
+    if (result.isEmpty) {
+      return Response.json(
+        body: const SignInWithEmailAndPasswordResponse(
+          error: SignInError.userNotFound,
+        ),
+      );
+    }
 
-    final storedPassword = base64.decode(result.first.password);
-    final storedSalt = base64.decode(result.first.salt);
+    final userId = result.first.id;
+
+    final hashedPassword = result.first.hashedPassword;
+    final salt = result.first.salt;
+
+    if (hashedPassword == null || salt == null) {
+      return Response.json(
+        body: const SignInWithEmailAndPasswordResponse(
+          error: SignInError.invalidCredentials,
+        ),
+      );
+    }
+
+    final storedPassword = base64.decode(hashedPassword);
+    final storedSalt = base64.decode(salt);
 
     final (hash: computedHash, salt: _) = await calculatePasswordHash(
       requestBody.password,
@@ -77,16 +77,11 @@ Handler signInWithEmailPasswordHandler() {
 
     final refreshToken = createRefreshToken();
 
-    final sessionId = await database.mappedSingleQuery(
-      Insert([
-        {'user_id': userId},
-      ], into: 'auth.sessions'),
-      fromJson: (row) => row['id'] as String,
-    );
-    await database.execute(
-      Insert([
-        {'user_id': userId, 'token': refreshToken, 'session_id': sessionId},
-      ], into: 'auth.refresh_tokens'),
+    final sessionId = await dataStorage.createSession(userId);
+    await dataStorage.createRefreshToken(
+      sessionId: sessionId,
+      refreshToken: refreshToken,
+      userId: userId,
     );
 
     return Response.json(

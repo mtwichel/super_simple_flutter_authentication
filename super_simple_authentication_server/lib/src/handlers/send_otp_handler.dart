@@ -1,11 +1,9 @@
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:postgres_builder/postgres_builder.dart';
 import 'package:shared_authentication_objects/shared_authentication_objects.dart';
-import 'package:super_simple_authentication_server/src/create_otp.dart';
-import 'package:super_simple_authentication_server/src/hash_otp.dart';
-import 'package:super_simple_authentication_server/src/utilities.dart';
+import 'package:super_simple_authentication_server/src/data_storage/data_storage.dart';
+import 'package:super_simple_authentication_server/src/util/util.dart';
 import 'package:super_simple_authentication_server/super_simple_authentication_server.dart';
 
 /// The duration the OTP will expire in.
@@ -24,15 +22,11 @@ Handler sendOtpHandler({
     }
     final requestBody = await context.request.parse(SendOtpRequest.fromJson);
 
-    final database = context.read<PostgresBuilder>();
-    await database.execute(
-      Update(
-        {'revoked': true},
-        where:
-            const Column('identifier').equals(requestBody.identifier) &
-            const Column('channel').equals(requestBody.type.name),
-        from: 'auth.otps',
-      ),
+    final dataStorage = context.read<DataStorage>();
+
+    await dataStorage.revokeOtpsFor(
+      identifier: requestBody.identifier,
+      channel: requestBody.type.name,
     );
 
     final environment = context.read<Environment>();
@@ -50,15 +44,12 @@ Handler sendOtpHandler({
     final hashedOtp = await hashOtp(otp);
     final now = context.read<Now>();
     final expiresAt = now.add(otpExpiration);
-    await database.execute(
-      Insert([
-        {
-          'identifier': requestBody.identifier,
-          'otp': hashedOtp,
-          'channel': requestBody.type.name,
-          'expires_at': expiresAt,
-        },
-      ], into: 'auth.otps'),
+
+    await dataStorage.createOtp(
+      identifier: requestBody.identifier,
+      channel: requestBody.type.name,
+      hashedOtp: hashedOtp,
+      expiresAt: expiresAt.toIso8601String(),
     );
 
     if (debugOtps) {

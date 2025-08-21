@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:meta/meta.dart';
-import 'package:super_simple_authentication_server/src/create_random_number.dart';
+import 'package:super_simple_authentication_server/src/util/create_random_number.dart';
 
 /// A tuple of the hash and the salt.
 typedef HashedPassword = ({List<int> hash, List<int> salt});
