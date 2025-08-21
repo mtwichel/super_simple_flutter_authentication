@@ -12,7 +12,12 @@ import 'package:super_simple_authentication_server/super_simple_authentication_s
 const otpExpiration = Duration(minutes: 10);
 
 /// A handler for sending an OTP.
-Handler sendOtpHandler({bool debugOtps = false}) {
+Handler sendOtpHandler({
+  String fromEmail = 'noreply@online-service.com',
+  String fromName = 'Online Service',
+  String? emailSubject,
+  bool debugOtps = false,
+}) {
   return (context) async {
     if (context.request.method != HttpMethod.post) {
       return Response(statusCode: HttpStatus.methodNotAllowed);
@@ -65,15 +70,15 @@ Handler sendOtpHandler({bool debugOtps = false}) {
           final sendgrid = context.read<Sendgrid>();
           await sendgrid.sendEmail(
             to: requestBody.identifier,
-            subject: 'Otp for Clubhaus',
+            subject: emailSubject ?? 'Your OTP for $fromName',
             body: 'Your OTP is $otp',
-            from: 'noreply@joinclubhaus.com',
+            from: fromEmail,
           );
         case OtpType.phone:
           final smsProvider = context.read<SmsProvider>();
           await smsProvider.sendSms(
             requestBody.identifier,
-            'Your Clubhaus verification code is $otp',
+            'Your $fromName verification code is $otp',
           );
       }
     }

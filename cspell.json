@@ -1,0 +1,25 @@
+{
+  "version": "0.2",
+  "ignorePaths": [
+    "**/build/**"
+  ],
+  "dictionaryDefinitions": [],
+  "dictionaries": [],
+  "words": [
+    "hmac",
+    "sendgrid",
+    "VARCHAR",
+    "mocktail",
+    "pointycastle",
+    "textbelt",
+    "pubspec",
+    "otps",
+    "endtemplate",
+    "twichel",
+    "wrongpassword",
+    "pkcs",
+    "subosito"
+  ],
+  "ignoreWords": [],
+  "import": []
+}
