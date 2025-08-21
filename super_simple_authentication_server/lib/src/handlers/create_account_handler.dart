@@ -2,12 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:postgres_builder/postgres_builder.dart';
 import 'package:shared_authentication_objects/shared_authentication_objects.dart';
-import 'package:super_simple_authentication_server/src/create_jwt.dart';
-import 'package:super_simple_authentication_server/src/create_refresh_token.dart';
-import 'package:super_simple_authentication_server/src/password_hashing.dart';
-import 'package:super_simple_authentication_server/src/utilities.dart';
+import 'package:super_simple_authentication_server/src/data_storage/data_storage.dart';
+import 'package:super_simple_authentication_server/src/util/util.dart';
 
 /// A handler for creating a new account.
 Handler createAccountHandler() {
@@ -19,31 +16,25 @@ Handler createAccountHandler() {
       CreateAccountWithEmailAndPasswordRequest.fromJson,
     );
 
-    final database = context.read<PostgresBuilder>();
+    final dataStorage = context.read<DataStorage>();
+
     final hashedPassword = await calculatePasswordHash(requestBody.password);
-    final userId = await database.mappedSingleQuery(
-      Insert([
-        {
-          'email': requestBody.email,
-          'password': base64.encode(hashedPassword.hash),
-          'salt': base64.encode(hashedPassword.salt),
-        },
-      ], into: 'users'),
-      fromJson: (row) => row['id'] as String,
+
+    final userId = await dataStorage.createUser(
+      email: requestBody.email,
+      hashedPassword: base64.encode(hashedPassword.hash),
+      salt: base64.encode(hashedPassword.salt),
     );
 
     final jwt = await createJwt(subject: userId, isNewUser: true);
     final refreshToken = createRefreshToken();
-    final sessionId = await database.mappedSingleQuery(
-      Insert([
-        {'user_id': userId},
-      ], into: 'auth.sessions'),
-      fromJson: (row) => row['id'] as String,
-    );
-    await database.execute(
-      Insert([
-        {'user_id': userId, 'token': refreshToken, 'session_id': sessionId},
-      ], into: 'auth.refresh_tokens'),
+
+    final sessionId = await dataStorage.createSession(userId);
+
+    await dataStorage.createRefreshToken(
+      sessionId: sessionId,
+      refreshToken: refreshToken,
+      userId: userId,
     );
 
     return Response.json(

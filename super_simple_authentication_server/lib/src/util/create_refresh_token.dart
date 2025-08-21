@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:super_simple_authentication_server/src/create_random_number.dart';
+import 'package:super_simple_authentication_server/src/util/create_random_number.dart';
 
 /// Creates a refresh token for a user.
 String createRefreshToken() {

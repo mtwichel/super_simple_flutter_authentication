@@ -1,12 +1,9 @@
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:postgres_builder/postgres_builder.dart';
 import 'package:shared_authentication_objects/shared_authentication_objects.dart';
-import 'package:super_simple_authentication_server/src/create_jwt.dart';
-import 'package:super_simple_authentication_server/src/create_refresh_token.dart';
-import 'package:super_simple_authentication_server/src/hash_otp.dart';
-import 'package:super_simple_authentication_server/src/utilities.dart';
+import 'package:super_simple_authentication_server/src/data_storage/data_storage.dart';
+import 'package:super_simple_authentication_server/src/util/util.dart';
 
 /// A handler for verifying an OTP.
 Handler verifyOtpHandler({
@@ -23,22 +20,15 @@ Handler verifyOtpHandler({
     }
     final requestBody = await context.request.parse(VerifyOtpRequest.fromJson);
 
-    final database = context.read<PostgresBuilder>();
+    final dataStorage = context.read<DataStorage>();
     final now = context.read<Now>();
-    final otpResponse = await database.mappedQuery(
-      Select(
-        [const Column('id'), const Column('otp')],
-        from: 'auth.otps',
-        where:
-            const Column('identifier').equals(requestBody.identifier) &
-            const Column('channel').equals(requestBody.type.name) &
-            const Column('expires_at').greaterThan(now) &
-            const Not(Column('revoked')),
-      ),
-      fromJson: (row) => (id: row['id'] as int, otp: row['otp'] as String),
+    final otp = await dataStorage.getOtpFor(
+      identifier: requestBody.identifier,
+      channel: requestBody.type.name,
+      now: now.toIso8601String(),
     );
 
-    if (otpResponse.isEmpty || otpResponse.length > 1) {
+    if (otp == null) {
       return Response.json(
         body: const VerifyOtpResponse(
           token: null,
@@ -48,10 +38,9 @@ Handler verifyOtpHandler({
       );
     }
 
-    final otp = otpResponse.first;
     final hashedRequestOtp = await hashOtp(requestBody.otp);
 
-    if (hashedRequestOtp != otp.otp) {
+    if (hashedRequestOtp != otp) {
       return Response.json(
         body: const VerifyOtpResponse(
           token: null,
@@ -61,26 +50,16 @@ Handler verifyOtpHandler({
       );
     }
 
-    await database.execute(
-      Update(
-        {'revoked': true},
-        where: const Column('id').equals(otp.id),
-        from: 'auth.otps',
-      ),
+    await dataStorage.revokeOtpsFor(
+      identifier: requestBody.identifier,
+      channel: requestBody.type.name,
     );
 
     final String userId;
-    final users = await database.mappedQuery(
-      Select(
-        [const Column('id')],
-        from: 'users',
-        where:
-            requestBody.type == OtpType.email
-                ? const Column('email').equals(requestBody.identifier)
-                : const Column('phone_number').equals(requestBody.identifier),
-      ),
-      fromJson: (row) => row['id'] as String,
-    );
+    final users =
+        requestBody.type == OtpType.email
+            ? await dataStorage.getUsersByEmail(requestBody.identifier)
+            : await dataStorage.getUsersByPhoneNumber(requestBody.identifier);
     if (users.length > 1) {
       return Response.json(
         body: const VerifyOtpResponse(
@@ -92,16 +71,11 @@ Handler verifyOtpHandler({
     }
     final isNewUser = users.isEmpty;
     if (isNewUser) {
-      userId = await database.mappedSingleQuery(
-        Insert([
-          {
-            if (requestBody.type == OtpType.email)
-              'email': requestBody.identifier,
-            if (requestBody.type == OtpType.phone)
-              'phone_number': requestBody.identifier,
-          },
-        ], into: 'users'),
-        fromJson: (row) => row['id'] as String,
+      userId = await dataStorage.createUser(
+        email:
+            requestBody.type == OtpType.email ? requestBody.identifier : null,
+        phoneNumber:
+            requestBody.type == OtpType.phone ? requestBody.identifier : null,
       );
 
       await onNewUser?.call(
@@ -112,22 +86,17 @@ Handler verifyOtpHandler({
             requestBody.type == OtpType.phone ? requestBody.identifier : null,
       );
     } else {
-      userId = users.first;
+      userId = users.first.id;
     }
 
     final token = await createJwt(subject: userId, isNewUser: isNewUser);
     final refreshToken = createRefreshToken();
 
-    final sessionId = await database.mappedSingleQuery(
-      Insert([
-        {'user_id': userId},
-      ], into: 'auth.sessions'),
-      fromJson: (row) => row['id'] as String,
-    );
-    await database.execute(
-      Insert([
-        {'user_id': userId, 'token': refreshToken, 'session_id': sessionId},
-      ], into: 'auth.refresh_tokens'),
+    final sessionId = await dataStorage.createSession(userId);
+    await dataStorage.createRefreshToken(
+      sessionId: sessionId,
+      refreshToken: refreshToken,
+      userId: userId,
     );
 
     return Response.json(
