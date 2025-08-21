@@ -23,12 +23,12 @@ class SuperSimpleAuthentication {
   SuperSimpleAuthentication({
     required String host,
     http.Client? client,
-    bool secureSheme = true,
+    bool secureScheme = true,
     int? port,
     String? basePath,
     FlutterSecureStorage? secureStorage,
   })  : _client = client ?? http.Client(),
-        _secureSheme = secureSheme,
+        _secureScheme = secureScheme,
         _host = host,
         _port = port,
         _basePath = basePath,
@@ -37,7 +37,7 @@ class SuperSimpleAuthentication {
   final http.Client _client;
   final FlutterSecureStorage _secureStorage;
 
-  final bool _secureSheme;
+  final bool _secureScheme;
   final String _host;
   final int? _port;
   final String? _basePath;
@@ -48,7 +48,7 @@ class SuperSimpleAuthentication {
     String scheme = 'http',
   }) {
     return Uri(
-      scheme: _secureSheme ? '${scheme}s' : scheme,
+      scheme: _secureScheme ? '${scheme}s' : scheme,
       host: _host,
       port: _port,
       path: _basePath != null ? '$_basePath$path' : path,

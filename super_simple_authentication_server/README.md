@@ -164,8 +164,8 @@ curl -X POST http://localhost:8080/auth/email-password/sign-in \
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "refresh_token_here",
+  "token": "_token_here_",
+  "refreshToken": "_refresh_token_here_",
   "error": null
 }
 ```
