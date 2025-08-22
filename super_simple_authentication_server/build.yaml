@@ -1,0 +1,5 @@
+targets:
+  $default:
+    builders:
+      hive_ce_generator:
+        enabled: true
