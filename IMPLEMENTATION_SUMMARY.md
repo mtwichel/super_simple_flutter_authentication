@@ -6,7 +6,7 @@
 - **File**: `lib/src/util/create_jwt_asymmetric.dart`
 - **Function**: `createJwtAsymmetric()`
 - **Features**:
-  - Uses RSA-SHA256 (RS256) algorithm
+  - Uses RSA-SHA256 (RS256) algorithm with PointyCastle
   - Supports key ID (kid) for key rotation
   - Compatible with Firebase-style JWT structure
   - Includes all standard JWT claims (iat, exp, nbf, etc.)
@@ -16,7 +16,7 @@
 - **Function**: `verifyJwt()` (enhanced)
 - **Features**:
   - Automatically detects signing algorithm from JWT header
-  - Supports both HS256 (symmetric) and RS256 (asymmetric)
+  - Supports both HS256 (symmetric) and RS256 (asymmetric) using PointyCastle
   - Backward compatible with existing symmetric tokens
   - Robust error handling for invalid signatures
 
@@ -24,7 +24,7 @@
 - **File**: `lib/src/util/rsa_key_manager.dart`
 - **Class**: `RsaKeyManager`
 - **Features**:
-  - Generate RSA key pairs
+  - Generate RSA key pairs using PointyCastle
   - Extract public keys from private keys
   - Generate JWK (JSON Web Key) format
   - Generate JWKS (JSON Web Key Set) format
@@ -52,8 +52,8 @@
 ## Key Features
 
 ### Algorithm Support
-- **HS256**: Existing symmetric signing (backward compatible)
-- **RS256**: New asymmetric signing (Firebase-style)
+- **HS256**: Existing symmetric signing (backward compatible) using PointyCastle
+- **RS256**: New asymmetric signing (Firebase-style) using PointyCastle
 
 ### Key Management
 - **Key Rotation**: Support for multiple keys with key IDs

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:cryptography/cryptography.dart';
+import 'package:pointycastle/export.dart';
 import 'package:test/test.dart';
 import 'package:super_simple_authentication_server/src/util/create_jwt_asymmetric.dart';
 import 'package:super_simple_authentication_server/src/verify_jwt.dart';

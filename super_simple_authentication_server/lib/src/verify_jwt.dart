@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:cryptography/cryptography.dart';
 import 'package:meta/meta.dart';
+import 'package:pointycastle/export.dart';
+import 'package:super_simple_authentication_server/src/util/rsa_key_manager.dart';
 
 /// Verifies a JWT and returns the payload if the signature is valid.
 /// Supports both symmetric (HS256) and asymmetric (RS256) signing.
@@ -12,8 +13,8 @@ Future<Map<String, dynamic>?> verifyJwt(
   String jwt, {
   String? secretKey,
   String? publicKeyPem,
-  @visibleForTesting Hmac? hmac,
-  @visibleForTesting RsaSsaPkcs1v15? rsaVerifier,
+  @visibleForTesting HMac? hmac,
+  @visibleForTesting RSAPublicKey? testPublicKey,
 }) async {
   final [encodedHeader, encodedPayload, encodedSignature] = jwt.split('.');
 
@@ -49,18 +50,18 @@ Future<Map<String, dynamic>?> verifyJwt(
     final resolvedSecretKey =
         secretKey ?? Platform.environment['JWT_SECRET_KEY']!;
 
-    final resolvedHmac = hmac ?? Hmac.sha256();
-    final secretKeyBytes = SecretKey(base64Url.decode(resolvedSecretKey));
+    final secretKeyBytes = base64Url.decode(resolvedSecretKey);
+    
+    // Use PointyCastle for HMAC-SHA256
+    final hmac = HMac(SHA256Digest(), 64);
+    hmac.init(KeyParameter(secretKeyBytes));
+    hmac.update(utf8.encode(signatureInput), 0, utf8.encode(signatureInput).length);
+    final signatureBytes = hmac.doFinal();
 
-    final signatureBytes = await resolvedHmac.calculateMac(
-      utf8.encode(signatureInput),
-      secretKey: secretKeyBytes,
-    );
-
-    if (signatureBytes.bytes.length == existingSignatureBytes.length) {
+    if (signatureBytes.length == existingSignatureBytes.length) {
       isValidSignature = true;
-      for (var i = 0; i < signatureBytes.bytes.length; i++) {
-        if (signatureBytes.bytes[i] != existingSignatureBytes[i]) {
+      for (var i = 0; i < signatureBytes.length; i++) {
+        if (signatureBytes[i] != existingSignatureBytes[i]) {
           isValidSignature = false;
           break;
         }
@@ -68,25 +69,45 @@ Future<Map<String, dynamic>?> verifyJwt(
     }
   } else if (algorithm == 'RS256') {
     // Asymmetric verification
-    final resolvedPublicKeyPem = publicKeyPem ?? 
-        Platform.environment['JWT_PUBLIC_KEY'] ?? 
-        Platform.environment['JWT_RSA_PUBLIC_KEY'];
-    
-    if (resolvedPublicKeyPem == null) {
-      throw Exception('JWT_PUBLIC_KEY or JWT_RSA_PUBLIC_KEY environment variable is required for RS256 verification');
+    RSAPublicKey publicKey;
+    if (testPublicKey != null) {
+      publicKey = testPublicKey;
+    } else {
+      final resolvedPublicKeyPem = publicKeyPem ?? 
+          Platform.environment['JWT_PUBLIC_KEY'] ?? 
+          Platform.environment['JWT_RSA_PUBLIC_KEY'];
+      
+      if (resolvedPublicKeyPem == null) {
+        throw Exception('JWT_PUBLIC_KEY or JWT_RSA_PUBLIC_KEY environment variable is required for RS256 verification');
+      }
+
+      // Parse the public key PEM
+      final lines = resolvedPublicKeyPem.split('\n');
+      final base64Key = lines
+          .where((line) => !line.startsWith('-----'))
+          .join('');
+      
+      final keyBytes = base64.decode(base64Key);
+      final asn1Parser = ASN1Parser(keyBytes);
+      final topLevelSeq = asn1Parser.nextObject() as ASN1Sequence;
+      
+      // Extract the bit string containing the public key
+      final bitString = topLevelSeq.elements![1] as ASN1BitString;
+      final publicKeyParser = ASN1Parser(bitString.contentBytes());
+      final publicKeySeq = publicKeyParser.nextObject() as ASN1Sequence;
+      
+      final modulus = (publicKeySeq.elements![0] as ASN1Integer).value!;
+      final exponent = (publicKeySeq.elements![1] as ASN1Integer).value!;
+      
+      publicKey = RSAPublicKey(modulus, exponent);
     }
 
-    final resolvedRsaVerifier = rsaVerifier ?? RsaSsaPkcs1v15.sha256();
-    final publicKey = await resolvedRsaVerifier.importPublicKey(
-      pem: resolvedPublicKeyPem,
-    );
-
     try {
-      await resolvedRsaVerifier.verify(
+      isValidSignature = RsaKeyManager.verifyRsaSha256(
         utf8.encode(signatureInput),
-        signature: Signature(existingSignatureBytes, publicKey: publicKey),
+        existingSignatureBytes,
+        publicKey,
       );
-      isValidSignature = true;
     } catch (e) {
       isValidSignature = false;
     }

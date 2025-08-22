@@ -4,7 +4,7 @@ This document outlines what you need to do outside of the code to implement asym
 
 ## Overview
 
-The implementation now supports both symmetric (HS256) and asymmetric (RS256) JWT signing, similar to Firebase Authentication. The system automatically detects the signing algorithm from the JWT header and validates accordingly.
+The implementation now supports both symmetric (HS256) and asymmetric (RS256) JWT signing, similar to Firebase Authentication. The system automatically detects the signing algorithm from the JWT header and validates accordingly. The implementation uses the PointyCastle cryptography library for all cryptographic operations.
 
 ## Environment Variables Required
 
@@ -40,7 +40,7 @@ openssl rsa -in private_key.pem -pubout -out public_key.pem
 
 ### Option 3: Use Existing Keys
 
-If you already have RSA keys, ensure they are in PEM format and compatible with the cryptography library.
+If you already have RSA keys, ensure they are in PEM format and compatible with the PointyCastle library.
 
 ## Environment Setup
 

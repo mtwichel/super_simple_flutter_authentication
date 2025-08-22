@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:pointycastle/export.dart';
 import 'package:super_simple_authentication_server/src/util/create_jwt_asymmetric.dart';
 import 'package:super_simple_authentication_server/src/verify_jwt.dart';
 import 'package:super_simple_authentication_server/src/util/rsa_key_manager.dart';

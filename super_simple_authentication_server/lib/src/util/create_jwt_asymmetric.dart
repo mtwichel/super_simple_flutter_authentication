@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:cryptography/cryptography.dart';
 import 'package:meta/meta.dart';
+import 'package:pointycastle/export.dart';
+import 'package:super_simple_authentication_server/src/util/rsa_key_manager.dart';
 
 /// Creates a JWT with asymmetric signing using RSA.
 /// This is similar to Firebase's JWT implementation.
@@ -15,7 +16,7 @@ Future<String> createJwtAsymmetric({
   String? issuer,
   String? keyId,
   Map<String, dynamic> additionalClaims = const {},
-  @visibleForTesting RsaSsaPkcs1v15? rsaSigner,
+  @visibleForTesting RSAPrivateKey? testPrivateKey,
 }) async {
   final payload = {
     ...additionalClaims,
@@ -47,27 +48,29 @@ Future<String> createJwtAsymmetric({
   // Create the signature input
   final signatureInput = '$encodedHeader.$encodedPayload';
 
-  // Get the private key from environment or use default
-  final privateKeyPem = Platform.environment['JWT_PRIVATE_KEY'] ?? 
-      Platform.environment['JWT_RSA_PRIVATE_KEY'];
-  
-  if (privateKeyPem == null) {
-    throw Exception('JWT_PRIVATE_KEY or JWT_RSA_PRIVATE_KEY environment variable is required for asymmetric signing');
+  // Get the private key
+  RSAPrivateKey privateKey;
+  if (testPrivateKey != null) {
+    privateKey = testPrivateKey;
+  } else {
+    final privateKeyPem = Platform.environment['JWT_PRIVATE_KEY'] ?? 
+        Platform.environment['JWT_RSA_PRIVATE_KEY'];
+    
+    if (privateKeyPem == null) {
+      throw Exception('JWT_PRIVATE_KEY or JWT_RSA_PRIVATE_KEY environment variable is required for asymmetric signing');
+    }
+    
+    privateKey = RsaKeyManager._decodePrivateKeyPem(privateKeyPem);
   }
 
-  // Create the signature using RSA
-  final resolvedRsaSigner = rsaSigner ?? RsaSsaPkcs1v15.sha256();
-  final privateKey = await resolvedRsaSigner.importPrivateKey(
-    pem: privateKeyPem,
-  );
-  
-  final signatureBytes = await resolvedRsaSigner.sign(
+  // Create the signature using RSA-SHA256
+  final signatureBytes = RsaKeyManager.signRsaSha256(
     utf8.encode(signatureInput),
-    secretKey: privateKey,
+    privateKey,
   );
   
   final encodedSignature = base64Url
-      .encode(signatureBytes.bytes)
+      .encode(signatureBytes)
       .replaceAll('=', '');
 
   // Combine all parts to create the JWT
