@@ -1,0 +1,10 @@
+{
+  "configurations": [
+    {
+      "name": "Launch Example App",
+      "type": "dart",
+      "request": "launch",
+      "program": "super_simple_authentication_flutter/example/lib/main.dart"
+    }
+  ]
+}

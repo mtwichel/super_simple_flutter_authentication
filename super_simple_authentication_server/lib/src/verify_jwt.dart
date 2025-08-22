@@ -164,14 +164,11 @@ Future<RSAPublicKey> _fetchPublicKeyFromJwks(
 /// Gets public key from environment variables.
 RSAPublicKey _getPublicKeyFromEnvironment(String? publicKeyPem) {
   final resolvedPublicKeyPem =
-      publicKeyPem ??
-      Platform.environment['JWT_PUBLIC_KEY'] ??
-      Platform.environment['JWT_RSA_PUBLIC_KEY'];
+      publicKeyPem ?? Platform.environment['JWT_RSA_PUBLIC_KEY'];
 
   if (resolvedPublicKeyPem == null) {
     throw Exception(
-      'JWT_PUBLIC_KEY or JWT_RSA_PUBLIC_KEY environment variable is '
-      'required for RS256 verification',
+      '''JWT_RSA_PUBLIC_KEY environment variable is required for RS256 verification''',
     );
   }
 

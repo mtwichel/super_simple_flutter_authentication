@@ -1,12 +1,9 @@
-import 'dart:convert';
-import 'dart:io';
+import 'package:super_simple_authentication_server/src/util/util.dart';
 
-import 'package:cryptography/cryptography.dart';
-import 'package:meta/meta.dart';
-
-/// Creates a JWT for the given email.
+/// Creates a JWT for the given user.
 Future<String> createJwt({
   required bool? isNewUser,
+  required Map<String, String> environment,
   Duration validFor = const Duration(hours: 1),
   Duration notBefore = Duration.zero,
   String? audience,
@@ -14,52 +11,34 @@ Future<String> createJwt({
   String? issuer,
   String? secretKey,
   Map<String, dynamic> additionalClaims = const {},
-  @visibleForTesting Hmac? hmac,
 }) async {
-  final payload = {
-    ...additionalClaims,
-    if (audience != null) 'aud': audience,
-    if (subject != null) 'sub': subject,
-    if (issuer != null) 'iss': issuer,
-    if (notBefore != Duration.zero)
-      'nbf': DateTime.now().add(notBefore).toUtc().toUnixTimestamp(),
-    'iat': DateTime.now().toUtc().toUnixTimestamp(),
-    'exp': DateTime.now().add(validFor).toUtc().toUnixTimestamp(),
-    if (isNewUser != null) 'new': isNewUser,
-  };
+  final isAsymmetric = environment['JWT_HASHING_STRATEGY'] == 'asymmetric';
 
-  // Create the header
-  final header = {'alg': 'HS256', 'typ': 'JWT'};
-
-  // Encode header and payload
-  final encodedHeader = base64Url
-      .encode(utf8.encode(json.encode(header)))
-      .replaceAll('=', '');
-  final encodedPayload = base64Url
-      .encode(utf8.encode(json.encode(payload)))
-      .replaceAll('=', '');
-
-  // Create the signature input
-  final signatureInput = '$encodedHeader.$encodedPayload';
-
-  final resolvedSecretKey =
-      secretKey ?? Platform.environment['JWT_SECRET_KEY']!;
-
-  // Create the signature using Hmac
-  final resolvedHmac = hmac ?? Hmac.sha256();
-  final secretKeyBytes = SecretKey(base64Url.decode(resolvedSecretKey));
-  final signatureBytes = await resolvedHmac.calculateMac(
-    utf8.encode(signatureInput),
-    secretKey: secretKeyBytes,
-  );
-  final encodedSignature = base64Url
-      .encode(signatureBytes.bytes)
-      .replaceAll('=', '');
-
-  // Combine all parts to create the JWT
-  return '$encodedHeader.$encodedPayload.$encodedSignature';
-}
-
-extension on DateTime {
-  int toUnixTimestamp() => millisecondsSinceEpoch ~/ 1000;
+  if (isAsymmetric) {
+    return createAsymmetricJwt(
+      isNewUser: isNewUser,
+      validFor: validFor,
+      notBefore: notBefore,
+      audience: audience,
+      subject: subject,
+      issuer: issuer,
+      additionalClaims: additionalClaims,
+      jwksUrl: environment['JWT_RSA_PUBLIC_KEY_URL'],
+    );
+  } else {
+    final secretKey = environment['JWT_SECRET_KEY'];
+    if (secretKey == null) {
+      throw Exception('JWT_SECRET_KEY is not set');
+    }
+    return createSymmetricJwt(
+      isNewUser: isNewUser,
+      validFor: validFor,
+      notBefore: notBefore,
+      audience: audience,
+      subject: subject,
+      issuer: issuer,
+      additionalClaims: additionalClaims,
+      secretKey: secretKey,
+    );
+  }
 }

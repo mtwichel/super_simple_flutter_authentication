@@ -26,7 +26,11 @@ Handler createAccountHandler() {
       salt: base64.encode(hashedPassword.salt),
     );
 
-    final jwt = await createJwt(subject: userId, isNewUser: true);
+    final jwt = await createJwt(
+      subject: userId,
+      isNewUser: true,
+      environment: context.read<Environment>(),
+    );
     final refreshToken = createRefreshToken();
 
     final sessionId = await dataStorage.createSession(userId);

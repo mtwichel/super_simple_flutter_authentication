@@ -73,7 +73,11 @@ Handler signInWithEmailPasswordHandler() {
         );
       }
     }
-    final jwt = await createJwt(subject: userId, isNewUser: false);
+    final jwt = await createJwt(
+      subject: userId,
+      isNewUser: false,
+      environment: context.read<Environment>(),
+    );
 
     final refreshToken = createRefreshToken();
 

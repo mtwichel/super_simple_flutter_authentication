@@ -132,7 +132,11 @@ Handler signInWithCredentialHandler() {
       userId = users.first.id;
     }
 
-    final jwt = await createJwt(subject: userId, isNewUser: isNewUser);
+    final jwt = await createJwt(
+      subject: userId,
+      isNewUser: isNewUser,
+      environment: context.read<Environment>(),
+    );
 
     final refreshToken = createRefreshToken();
 

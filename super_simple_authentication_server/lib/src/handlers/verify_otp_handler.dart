@@ -89,7 +89,11 @@ Handler verifyOtpHandler({
       userId = users.first.id;
     }
 
-    final token = await createJwt(subject: userId, isNewUser: isNewUser);
+    final token = await createJwt(
+      subject: userId,
+      isNewUser: isNewUser,
+      environment: context.read<Environment>(),
+    );
     final refreshToken = createRefreshToken();
 
     final sessionId = await dataStorage.createSession(userId);
