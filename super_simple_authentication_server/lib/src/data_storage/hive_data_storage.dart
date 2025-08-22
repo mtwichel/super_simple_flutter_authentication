@@ -11,6 +11,20 @@ class HiveDataStorage implements DataStorage {
   /// {@macro hive_data_storage}
   HiveDataStorage();
 
+  /// {@macro hive_data_storage}
+  HiveDataStorage.autoInitialize({
+    String databaseName = 'super_simple_authentication',
+    String? databasePath,
+    HiveCipher? encryptionKey,
+  }) {
+    initialize(
+      databaseName: databaseName,
+      databasePath: databasePath,
+      encryptionKey: encryptionKey,
+    );
+  }
+
+  bool _initialized = false;
   late final BoxCollection _db;
   late final CollectionBox<Map> _usersBox;
   late final CollectionBox<Map> _otpsBox;
@@ -21,15 +35,27 @@ class HiveDataStorage implements DataStorage {
   static const _uuid = Uuid();
 
   /// Initializes the database.
-  Future<void> initialize() async {
-    _db = await BoxCollection.open(_databasePath, {
-      'otps',
-      'refresh_tokens',
-      'sessions',
-      'users',
-      'emails',
-      'phone_numbers',
-    });
+  Future<void> initialize({
+    String databaseName = 'super_simple_authentication',
+    String? databasePath,
+    HiveCipher? encryptionKey,
+  }) async {
+    if (_initialized) {
+      return;
+    }
+    _db = await BoxCollection.open(
+      databaseName,
+      {
+        'otps',
+        'refresh_tokens',
+        'sessions',
+        'users',
+        'emails',
+        'phone_numbers',
+      },
+      path: databasePath,
+      key: encryptionKey,
+    );
 
     _usersBox = await _db.openBox<Map>('users');
     _otpsBox = await _db.openBox<Map>('otps');
@@ -37,6 +63,8 @@ class HiveDataStorage implements DataStorage {
     _sessionsBox = await _db.openBox<Map>('sessions');
     _emailsBox = await _db.openBox<String>('emails');
     _phoneNumbersBox = await _db.openBox<String>('phone_numbers');
+
+    _initialized = true;
   }
 
   @override
