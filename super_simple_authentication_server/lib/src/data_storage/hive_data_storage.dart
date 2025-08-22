@@ -140,7 +140,7 @@ class HiveDataStorage implements DataStorage {
       (
         id: userId,
         email: user?['email'] as String?,
-        phoneNumber: null,
+        phoneNumber: user?['phoneNumber'] as String?,
         hashedPassword: user?['hashedPassword'] as String?,
         salt: user?['salt'] as String?,
       ),
