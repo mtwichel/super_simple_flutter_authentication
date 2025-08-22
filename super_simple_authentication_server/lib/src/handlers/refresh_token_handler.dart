@@ -36,7 +36,11 @@ Handler refreshTokenHandler() {
       refreshedAt: DateTime.now().toIso8601String(),
     );
 
-    final jwt = await createJwt(subject: userId, isNewUser: false);
+    final jwt = await createJwt(
+      subject: userId,
+      isNewUser: false,
+      environment: context.read<Environment>(),
+    );
 
     final newRefreshToken = createRefreshToken();
 

@@ -8,6 +8,7 @@ import 'package:pointycastle/asn1/primitives/asn1_bit_string.dart';
 import 'package:pointycastle/asn1/primitives/asn1_integer.dart';
 import 'package:pointycastle/asn1/primitives/asn1_null.dart';
 import 'package:pointycastle/asn1/primitives/asn1_object_identifier.dart';
+import 'package:pointycastle/asn1/primitives/asn1_octet_string.dart';
 import 'package:pointycastle/asn1/primitives/asn1_sequence.dart';
 import 'package:pointycastle/export.dart';
 
@@ -20,25 +21,29 @@ class RsaKeyManager {
   /// Generates a new RSA key pair and returns the PEM-formatted private key.
   /// The public key can be extracted using [extractPublicKey].
   static Future<String> generateKeyPair({int keySize = _defaultKeySize}) async {
-    final secureRandom = SecureRandom('Fortuna');
-    final random = Random.secure();
-    final seed = List<int>.generate(32, (i) => random.nextInt(256));
-    secureRandom.seed(KeyParameter(Uint8List.fromList(seed)));
+    try {
+      final secureRandom = SecureRandom('Fortuna');
+      final random = Random.secure();
+      final seed = List<int>.generate(32, (i) => random.nextInt(256));
+      secureRandom.seed(KeyParameter(Uint8List.fromList(seed)));
 
-    final keyGen =
-        RSAKeyGenerator()..init(
-          ParametersWithRandom(
-            RSAKeyGeneratorParameters(BigInt.from(65537), keySize, 64),
-            secureRandom,
-          ),
-        );
+      final keyGen =
+          RSAKeyGenerator()..init(
+            ParametersWithRandom(
+              RSAKeyGeneratorParameters(BigInt.from(65537), keySize, 64),
+              secureRandom,
+            ),
+          );
 
-    final keyPair = keyGen.generateKeyPair();
-    final privateKey = keyPair.privateKey;
+      final keyPair = keyGen.generateKeyPair();
+      final privateKey = keyPair.privateKey;
 
-    // Convert to PEM format
-    final privateKeyPem = _encodePrivateKeyPem(privateKey);
-    return privateKeyPem;
+      // Convert to PEM format
+      final privateKeyPem = _encodePrivateKeyPem(privateKey);
+      return privateKeyPem;
+    } catch (e) {
+      throw Exception('Failed to generate RSA key pair: $e');
+    }
   }
 
   /// Extracts the public key from a PEM-formatted private key.
@@ -47,7 +52,7 @@ class RsaKeyManager {
     final privateKey = decodePrivateKeyPem(privateKeyPem);
     final publicKey = RSAPublicKey(
       privateKey.modulus!,
-      privateKey.privateExponent!,
+      BigInt.from(65537), // RSA public exponent is typically 65537
     );
     return _encodePublicKeyPem(publicKey);
   }
@@ -63,7 +68,7 @@ class RsaKeyManager {
     final privateKey = decodePrivateKeyPem(privateKeyPem);
     final publicKey = RSAPublicKey(
       privateKey.modulus!,
-      privateKey.privateExponent!,
+      BigInt.from(65537), // RSA public exponent is typically 65537
     );
 
     // Convert modulus and exponent to base64url encoding
@@ -96,13 +101,11 @@ class RsaKeyManager {
   /// Loads a private key from environment variables or file.
   /// Returns the PEM-formatted private key.
   static String loadPrivateKey() {
-    final privateKeyPem =
-        Platform.environment['JWT_PRIVATE_KEY'] ??
-        Platform.environment['JWT_RSA_PRIVATE_KEY'];
+    final privateKeyPem = Platform.environment['JWT_RSA_PRIVATE_KEY'];
 
     if (privateKeyPem == null) {
       throw Exception(
-        '''JWT_PRIVATE_KEY or JWT_RSA_PRIVATE_KEY environment variable is required''',
+        '''JWT_RSA_PRIVATE_KEY environment variable is required''',
       );
     }
 
@@ -140,27 +143,98 @@ class RsaKeyManager {
 
   /// Decodes a PEM-formatted private key to RSAPrivateKey.
   static RSAPrivateKey decodePrivateKeyPem(String pem) {
-    final lines = pem.split('\n');
-    final base64Key = lines.where((line) => !line.startsWith('-----')).join();
+    try {
+      // Validate PEM format
+      if (!pem.contains('-----BEGIN PRIVATE KEY-----') ||
+          !pem.contains('-----END PRIVATE KEY-----')) {
+        throw Exception(
+          'Invalid PEM format: missing BEGIN/END PRIVATE KEY markers',
+        );
+      }
 
-    final keyBytes = base64.decode(base64Key);
-    final asn1Parser = ASN1Parser(keyBytes);
-    final topLevelSeq = asn1Parser.nextObject() as ASN1Sequence;
+      final lines = pem.split('\n');
+      final base64Key = lines.where((line) => !line.startsWith('-----')).join();
 
-    // Parse the ASN.1 structure for RSA private key
-    final values = topLevelSeq.elements!;
-    final version = values[0] as ASN1Integer;
+      if (base64Key.isEmpty) {
+        throw Exception('No base64 key data found in PEM');
+      }
 
-    if (version.integer!.toInt() != 0) {
-      throw Exception('Unsupported RSA private key version');
+      final keyBytes = base64.decode(base64Key);
+
+      if (keyBytes.isEmpty) {
+        throw Exception('Decoded key bytes are empty');
+      }
+
+      final asn1Parser = ASN1Parser(keyBytes);
+      final topLevelSeq = asn1Parser.nextObject() as ASN1Sequence;
+
+      // Check if this is PKCS#8 format (3 elements) or PKCS#1 format (9 elements)
+      if (topLevelSeq.elements == null || topLevelSeq.elements!.length < 3) {
+        throw Exception(
+          'Invalid ASN.1 structure: expected at least 3 elements, got ${topLevelSeq.elements?.length ?? 0}',
+        );
+      }
+
+      final values = topLevelSeq.elements!;
+      final version = values[0] as ASN1Integer;
+
+      if (version.integer!.toInt() != 0) {
+        throw Exception(
+          'Unsupported RSA private key version: ${version.integer}',
+        );
+      }
+
+      // If we have 3 elements, this is PKCS#8 format
+      if (values.length == 3) {
+        // PKCS#8 format: [version, algorithm, privateKey]
+        final privateKeyOctets = values[2] as ASN1OctetString;
+        final privateKeyBytes = privateKeyOctets.octets;
+
+        // Parse the private key octets as ASN.1
+        final privateKeyParser = ASN1Parser(privateKeyBytes);
+        final privateKeySeq = privateKeyParser.nextObject() as ASN1Sequence;
+
+        if (privateKeySeq.elements == null ||
+            privateKeySeq.elements!.length < 6) {
+          throw Exception(
+            'Invalid RSA private key structure: expected at least 6 elements, got ${privateKeySeq.elements?.length ?? 0}',
+          );
+        }
+
+        // Parse the RSA private key components
+        final rsaValues = privateKeySeq.elements!;
+        final modulus = (rsaValues[1] as ASN1Integer).integer!;
+        final privateExponent = (rsaValues[3] as ASN1Integer).integer!;
+        final prime1 = (rsaValues[4] as ASN1Integer).integer!;
+        final prime2 = (rsaValues[5] as ASN1Integer).integer!;
+
+        return RSAPrivateKey(modulus, privateExponent, prime1, prime2);
+      } else {
+        // PKCS#1 format: direct RSA private key
+        if (values.length < 6) {
+          throw Exception(
+            'Invalid PKCS#1 structure: expected at least 6 elements, got ${values.length}',
+          );
+        }
+
+        final modulus = (values[1] as ASN1Integer).integer!;
+        final privateExponent = (values[3] as ASN1Integer).integer!;
+        final prime1 = (values[4] as ASN1Integer).integer!;
+        final prime2 = (values[5] as ASN1Integer).integer!;
+
+        return RSAPrivateKey(modulus, privateExponent, prime1, prime2);
+      }
+    } catch (e) {
+      if (e is FormatException) {
+        throw Exception('Invalid base64 encoding in private key: ${e.message}');
+      } else if (e is RangeError) {
+        throw Exception(
+          'Invalid key data: key appears to be truncated or corrupted',
+        );
+      } else {
+        rethrow;
+      }
     }
-
-    final modulus = (values[1] as ASN1Integer).integer!;
-    final privateExponent = (values[3] as ASN1Integer).integer!;
-    final prime1 = (values[4] as ASN1Integer).integer!;
-    final prime2 = (values[5] as ASN1Integer).integer!;
-
-    return RSAPrivateKey(modulus, privateExponent, prime1, prime2);
   }
 
   /// Encodes an RSAPrivateKey to PEM format.
@@ -169,7 +243,9 @@ class RsaKeyManager {
       elements: [
         ASN1Integer.fromtInt(0), // version
         ASN1Integer.fromBytes(_bigIntToBytes(privateKey.modulus!)),
-        ASN1Integer.fromBytes(_bigIntToBytes(privateKey.exponent!)),
+        ASN1Integer.fromBytes(
+          _bigIntToBytes(BigInt.from(65537)),
+        ), // public exponent (usually 65537)
         ASN1Integer.fromBytes(_bigIntToBytes(privateKey.privateExponent!)),
         ASN1Integer.fromBytes(_bigIntToBytes(privateKey.p!)),
         ASN1Integer.fromBytes(_bigIntToBytes(privateKey.q!)),

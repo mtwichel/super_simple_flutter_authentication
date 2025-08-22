@@ -5,8 +5,7 @@ import 'package:pointycastle/export.dart';
 import 'package:super_simple_authentication_server/src/util/rsa_key_manager.dart';
 
 /// Creates a JWT with asymmetric signing using RSA.
-/// This is similar to Firebase's JWT implementation.
-Future<String> createJwtAsymmetric({
+Future<String> createAsymmetricJwt({
   required bool? isNewUser,
   Duration validFor = const Duration(hours: 1),
   Duration notBefore = Duration.zero,

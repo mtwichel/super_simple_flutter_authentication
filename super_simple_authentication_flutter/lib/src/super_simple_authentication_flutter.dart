@@ -10,6 +10,19 @@ import 'package:super_simple_authentication_flutter/super_simple_authentication_
 const _accessTokenKey = 'accessToken';
 const _refreshTokenKey = 'refreshToken';
 
+/// A record of the paths for the endpoints of the Super Simple Authentication
+typedef EndpointPaths = ({
+  String signInWithEmailAndPassword,
+  String createAccountWithEmailAndPassword,
+  String sendEmailOtp,
+  String verifyEmailOtp,
+  String sendPhoneOtp,
+  String verifyPhoneOtp,
+  String signInWithCredential,
+  String signInAnonymously,
+  String refreshToken,
+});
+
 /// Converts a Map to a type
 typedef FromJson<T> = T Function(Map<String, dynamic> json);
 
@@ -24,6 +37,17 @@ class SuperSimpleAuthentication {
     required String host,
     http.Client? client,
     bool secureScheme = true,
+    EndpointPaths endpointPaths = const (
+      signInWithEmailAndPassword: '/sign-in/email-password',
+      createAccountWithEmailAndPassword: '/create-account',
+      sendEmailOtp: '/send-otp',
+      verifyEmailOtp: '/sign-in/otp',
+      sendPhoneOtp: '/send-otp',
+      verifyPhoneOtp: '/sign-in/otp',
+      signInWithCredential: '/sign-in/credential',
+      signInAnonymously: '/sign-in/anonymously',
+      refreshToken: '/refresh',
+    ),
     int? port,
     String? basePath,
     FlutterSecureStorage? secureStorage,
@@ -32,6 +56,7 @@ class SuperSimpleAuthentication {
         _host = host,
         _port = port,
         _basePath = basePath,
+        _endpointPaths = endpointPaths,
         _secureStorage = secureStorage ?? const FlutterSecureStorage();
 
   final http.Client _client;
@@ -41,6 +66,7 @@ class SuperSimpleAuthentication {
   final String _host;
   final int? _port;
   final String? _basePath;
+  final EndpointPaths _endpointPaths;
 
   Uri _makeUri(
     String path, {
@@ -69,7 +95,7 @@ class SuperSimpleAuthentication {
       _makeUri(path),
     );
     request.headers.addAll(headers);
-    request.headers[HttpHeaders.contentTypeHeader] = 'application/json';
+    request.headers[HttpHeaders.contentTypeHeader] = ContentType.json.mimeType;
     if (body != null) {
       request.body = jsonEncode(body);
     }
@@ -124,6 +150,9 @@ class SuperSimpleAuthentication {
   Stream<TokenData?> get tokenDataStream => _accessTokenController.stream
       .map((token) => token == null ? null : TokenData.fromToken(token));
 
+  /// True if the user is signed in.
+  bool get isSignedIn => _accessToken != null;
+
   /// Initializes the authentication client by loading tokens from secure
   /// storage.
   Future<void> initialize() async {
@@ -146,7 +175,7 @@ class SuperSimpleAuthentication {
       :refreshToken,
       :error
     ) = await _makeRequest(
-      '/auth/email-password/sign-in',
+      _endpointPaths.signInWithEmailAndPassword,
       method: 'POST',
       body: SignInWithEmailAndPasswordRequest(email: email, password: password),
       responseFromJson: SignInWithEmailAndPasswordResponse.fromJson,
@@ -176,7 +205,7 @@ class SuperSimpleAuthentication {
       :refreshToken,
       :error
     ) = await _makeRequest(
-      '/auth/email-password/create-account',
+      _endpointPaths.createAccountWithEmailAndPassword,
       method: 'POST',
       body: CreateAccountWithEmailAndPasswordRequest(
         email: email,
@@ -198,7 +227,7 @@ class SuperSimpleAuthentication {
     required String email,
   }) async {
     await _makeRequest(
-      '/auth/request-otp',
+      _endpointPaths.sendEmailOtp,
       method: 'POST',
       body: SendOtpRequest(identifier: email, type: OtpType.email),
       responseFromJson: SendOtpResponse.fromJson,
@@ -212,7 +241,7 @@ class SuperSimpleAuthentication {
   }) async {
     final VerifyOtpResponse(token: accessToken, :refreshToken, :error) =
         await _makeRequest(
-      '/auth/verify-otp',
+      _endpointPaths.verifyEmailOtp,
       method: 'POST',
       body: VerifyOtpRequest(identifier: email, otp: otp, type: OtpType.email),
       responseFromJson: VerifyOtpResponse.fromJson,
@@ -231,7 +260,7 @@ class SuperSimpleAuthentication {
     required String phoneNumber,
   }) async {
     await _makeRequest(
-      '/auth/request-otp',
+      _endpointPaths.sendPhoneOtp,
       method: 'POST',
       body: SendOtpRequest(identifier: phoneNumber, type: OtpType.phone),
       responseFromJson: SendOtpResponse.fromJson,
@@ -245,7 +274,7 @@ class SuperSimpleAuthentication {
   }) async {
     final VerifyOtpResponse(token: accessToken, :refreshToken, :error) =
         await _makeRequest(
-      '/auth/verify-otp',
+      _endpointPaths.verifyPhoneOtp,
       method: 'POST',
       body: VerifyOtpRequest(
         identifier: phoneNumber,
@@ -272,7 +301,7 @@ class SuperSimpleAuthentication {
       :refreshToken,
       :error
     ) = await _makeRequest(
-      '/auth/sign-in-with-credential',
+      _endpointPaths.signInWithCredential,
       method: 'POST',
       body: SignInWithCredentialRequest(credential: credential),
       responseFromJson: SignInWithCredentialResponse.fromJson,
@@ -291,7 +320,7 @@ class SuperSimpleAuthentication {
   Future<void> signInAnonymously() async {
     final SignInAnonymouslyResponse(token: accessToken, :refreshToken, :error) =
         await _makeRequest(
-      '/auth/sign-in-anonymously',
+      _endpointPaths.signInAnonymously,
       method: 'POST',
       responseFromJson: SignInAnonymouslyResponse.fromJson,
     );
