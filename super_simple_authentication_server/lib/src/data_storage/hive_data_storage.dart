@@ -22,7 +22,7 @@ class HiveDataStorage implements DataStorage {
 
   /// Initializes the database.
   Future<void> initialize() async {
-    _db = await BoxCollection.open('super_simple_authentication', {
+    _db = await BoxCollection.open(_databasePath, {
       'otps',
       'refresh_tokens',
       'sessions',
