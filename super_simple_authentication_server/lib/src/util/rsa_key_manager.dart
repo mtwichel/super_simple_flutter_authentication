@@ -118,9 +118,13 @@ class RsaKeyManager {
     final publicKey = await extractPublicKey(privateKeyPem);
     final publicKeyBytes = utf8.encode(publicKey);
 
-    // Simple hash-based key ID - in production you might want to use SHA-256
-    final hash = publicKeyBytes.fold<int>(0, (hash, byte) => hash + byte);
-    return hash.toRadixString(16).padLeft(8, '0');
+    // Use a simple but robust hash calculation that avoids range errors
+    // Take the first 8 bytes and create a simple hash
+    final keyIdBytes = publicKeyBytes.take(8).toList();
+    final keyId =
+        keyIdBytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+
+    return keyId;
   }
 
   /// Signs data using RSA-SHA256 with a private key.
@@ -177,12 +181,20 @@ class RsaKeyManager {
       }
 
       final values = topLevelSeq.elements!;
-      final version = values[0] as ASN1Integer;
 
-      if (version.integer!.toInt() != 0) {
-        throw Exception(
-          'Unsupported RSA private key version: ${version.integer}',
-        );
+      try {
+        final version = values[0] as ASN1Integer;
+
+        if (version.integer! != BigInt.zero) {
+          throw Exception(
+            'Unsupported RSA private key version: ${version.integer}',
+          );
+        }
+      } catch (e) {
+        if (e is RangeError) {
+          throw Exception('Range error while parsing version: ${e.message}');
+        }
+        rethrow;
       }
 
       // If we have 3 elements, this is PKCS#8 format
@@ -204,12 +216,22 @@ class RsaKeyManager {
 
         // Parse the RSA private key components
         final rsaValues = privateKeySeq.elements!;
-        final modulus = (rsaValues[1] as ASN1Integer).integer!;
-        final privateExponent = (rsaValues[3] as ASN1Integer).integer!;
-        final prime1 = (rsaValues[4] as ASN1Integer).integer!;
-        final prime2 = (rsaValues[5] as ASN1Integer).integer!;
 
-        return RSAPrivateKey(modulus, privateExponent, prime1, prime2);
+        try {
+          final modulus = (rsaValues[1] as ASN1Integer).integer!;
+          final privateExponent = (rsaValues[3] as ASN1Integer).integer!;
+          final prime1 = (rsaValues[4] as ASN1Integer).integer!;
+          final prime2 = (rsaValues[5] as ASN1Integer).integer!;
+
+          return RSAPrivateKey(modulus, privateExponent, prime1, prime2);
+        } catch (e) {
+          if (e is RangeError) {
+            throw Exception(
+              'Range error while parsing RSA key components: ${e.message}',
+            );
+          }
+          rethrow;
+        }
       } else {
         // PKCS#1 format: direct RSA private key
         if (values.length < 6) {
@@ -218,19 +240,28 @@ class RsaKeyManager {
           );
         }
 
-        final modulus = (values[1] as ASN1Integer).integer!;
-        final privateExponent = (values[3] as ASN1Integer).integer!;
-        final prime1 = (values[4] as ASN1Integer).integer!;
-        final prime2 = (values[5] as ASN1Integer).integer!;
+        try {
+          final modulus = (values[1] as ASN1Integer).integer!;
+          final privateExponent = (values[3] as ASN1Integer).integer!;
+          final prime1 = (values[4] as ASN1Integer).integer!;
+          final prime2 = (values[5] as ASN1Integer).integer!;
 
-        return RSAPrivateKey(modulus, privateExponent, prime1, prime2);
+          return RSAPrivateKey(modulus, privateExponent, prime1, prime2);
+        } catch (e) {
+          if (e is RangeError) {
+            throw Exception(
+              'Range error while parsing PKCS#1 RSA key components: ${e.message}',
+            );
+          }
+          rethrow;
+        }
       }
     } catch (e) {
       if (e is FormatException) {
         throw Exception('Invalid base64 encoding in private key: ${e.message}');
       } else if (e is RangeError) {
         throw Exception(
-          'Invalid key data: key appears to be truncated or corrupted',
+          'Invalid key data: key appears to be truncated or corrupted. Error: ${e.message}',
         );
       } else {
         rethrow;
@@ -316,8 +347,8 @@ class RsaKeyManager {
   static Uint8List _encodePublicKeyAsn1(RSAPublicKey publicKey) {
     final asn1Seq = ASN1Sequence(
       elements: [
-        ASN1Integer.fromBytes(_bigIntToBytes(publicKey.modulus!)),
-        ASN1Integer.fromBytes(_bigIntToBytes(publicKey.exponent!)),
+        ASN1Integer(publicKey.modulus),
+        ASN1Integer(publicKey.exponent),
       ],
     );
     return asn1Seq.encode();
@@ -325,21 +356,32 @@ class RsaKeyManager {
 
   /// Converts a BigInt to bytes, removing leading zeros.
   static Uint8List _bigIntToBytes(BigInt value) {
-    final hexString = value.toRadixString(16);
-    // Ensure even length by adding leading zero if needed
-    final paddedHex = hexString.length.isEven ? hexString : '0$hexString';
+    // Handle negative values
+    if (value < BigInt.zero) {
+      throw ArgumentError('BigInt value must be non-negative');
+    }
 
-    final byteList = <int>[];
-    for (var i = 0; i < paddedHex.length; i += 2) {
-      byteList.add(int.parse(paddedHex.substring(i, i + 2), radix: 16));
+    // Handle zero case
+    if (value == BigInt.zero) {
+      return Uint8List.fromList([0]);
+    }
+
+    // Convert to bytes using a more robust method
+    final bytes = <int>[];
+    var temp = value;
+
+    while (temp > BigInt.zero) {
+      final remainder = temp % BigInt.from(256);
+      bytes.insert(0, remainder.toInt());
+      temp = temp ~/ BigInt.from(256);
     }
 
     // Remove leading zeros
     var startIndex = 0;
-    while (startIndex < byteList.length - 1 && byteList[startIndex] == 0) {
+    while (startIndex < bytes.length - 1 && bytes[startIndex] == 0) {
       startIndex++;
     }
 
-    return Uint8List.fromList(byteList.sublist(startIndex));
+    return Uint8List.fromList(bytes.sublist(startIndex));
   }
 }

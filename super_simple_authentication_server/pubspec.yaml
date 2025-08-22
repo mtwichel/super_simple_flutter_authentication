@@ -7,7 +7,6 @@ environment:
   sdk: ^3.7.0
 
 dependencies:
-  cryptography: ^2.7.0
   dart_frog: ^1.1.0
   equatable: ^2.0.7
   hive_ce: ^2.11.3
