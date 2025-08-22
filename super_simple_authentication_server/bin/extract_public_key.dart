@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,20 +10,22 @@ import 'package:super_simple_authentication_server/src/util/rsa_key_manager.dart
 void main(List<String> args) async {
   if (args.isEmpty) {
     print('Usage: dart run extract_public_key.dart <private_key_file>');
-    print('Or set JWT_PRIVATE_KEY environment variable and run without arguments');
+    print(
+      'Or set JWT_PRIVATE_KEY environment variable and run without arguments',
+    );
     exit(1);
   }
 
   try {
     String privateKeyPem;
-    
+
     if (args.length == 1 && args[0] == '--env') {
       // Read from environment variable
       privateKeyPem = RsaKeyManager.loadPrivateKey();
     } else {
       // Read from file
       final privateKeyFile = File(args[0]);
-      if (!await privateKeyFile.exists()) {
+      if (!privateKeyFile.existsSync()) {
         print('Error: Private key file not found: ${args[0]}');
         exit(1);
       }
@@ -30,22 +34,28 @@ void main(List<String> args) async {
 
     // Extract public key
     final publicKeyPem = await RsaKeyManager.extractPublicKey(privateKeyPem);
-    
+
     // Generate key ID
     final keyId = await RsaKeyManager.generateKeyId(privateKeyPem);
-    
+
     // Generate JWK
-    final jwk = await RsaKeyManager.extractPublicKeyJwk(privateKeyPem, keyId: keyId);
-    
+    final jwk = await RsaKeyManager.extractPublicKeyJwk(
+      privateKeyPem,
+      keyId: keyId,
+    );
+
     print('=== Public Key (PEM) ===');
     print(publicKeyPem);
     print('\n=== Key ID ===');
     print(keyId);
     print('\n=== JWK ===');
-    print(JsonEncoder.withIndent('  ').convert(jwk));
+    print(const JsonEncoder.withIndent('  ').convert(jwk));
     print('\n=== JWKS ===');
-    print(JsonEncoder.withIndent('  ').convert({'keys': [jwk]}));
-    
+    print(
+      const JsonEncoder.withIndent('  ').convert({
+        'keys': [jwk],
+      }),
+    );
   } catch (e) {
     print('Error: $e');
     exit(1);

@@ -1,25 +1,20 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:dart_frog/dart_frog.dart';
 import 'package:super_simple_authentication_server/src/util/rsa_key_manager.dart';
 
-/// JWKS (JSON Web Key Set) endpoint that serves public keys for JWT verification.
+/// JWKS (JSON Web Key Set) endpoint that serves public keys for JWT
+/// verification.
 /// This endpoint is similar to Firebase's JWKS endpoint.
-Response onRequest(RequestContext context) async {
+Future<Response> onRequest(RequestContext context) async {
   try {
     // Load the private key to extract the public key
     final privateKeyPem = RsaKeyManager.loadPrivateKey();
-    
+
     // Generate a key ID for the key
     final keyId = await RsaKeyManager.generateKeyId(privateKeyPem);
-    
+
     // Generate the JWKS
-    final jwks = await RsaKeyManager.generateJwks(
-      privateKeyPem,
-      keyId: keyId,
-    );
-    
+    final jwks = await RsaKeyManager.generateJwks(privateKeyPem, keyId: keyId);
+
     return Response.json(
       body: jwks,
       headers: {

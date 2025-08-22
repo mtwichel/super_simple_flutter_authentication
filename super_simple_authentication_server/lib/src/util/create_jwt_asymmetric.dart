@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:meta/meta.dart';
 import 'package:pointycastle/export.dart';
@@ -15,6 +14,7 @@ Future<String> createJwtAsymmetric({
   String? subject,
   String? issuer,
   String? keyId,
+  String? jwksUrl,
   Map<String, dynamic> additionalClaims = const {},
   @visibleForTesting RSAPrivateKey? testPrivateKey,
 }) async {
@@ -35,6 +35,7 @@ Future<String> createJwtAsymmetric({
     'alg': 'RS256',
     'typ': 'JWT',
     if (keyId != null) 'kid': keyId,
+    if (jwksUrl != null) 'jku': jwksUrl,
   };
 
   // Encode header and payload
@@ -53,14 +54,8 @@ Future<String> createJwtAsymmetric({
   if (testPrivateKey != null) {
     privateKey = testPrivateKey;
   } else {
-    final privateKeyPem = Platform.environment['JWT_PRIVATE_KEY'] ?? 
-        Platform.environment['JWT_RSA_PRIVATE_KEY'];
-    
-    if (privateKeyPem == null) {
-      throw Exception('JWT_PRIVATE_KEY or JWT_RSA_PRIVATE_KEY environment variable is required for asymmetric signing');
-    }
-    
-    privateKey = RsaKeyManager._decodePrivateKeyPem(privateKeyPem);
+    final privateKeyPem = RsaKeyManager.loadPrivateKey();
+    privateKey = RsaKeyManager.decodePrivateKeyPem(privateKeyPem);
   }
 
   // Create the signature using RSA-SHA256
@@ -68,10 +63,8 @@ Future<String> createJwtAsymmetric({
     utf8.encode(signatureInput),
     privateKey,
   );
-  
-  final encodedSignature = base64Url
-      .encode(signatureBytes)
-      .replaceAll('=', '');
+
+  final encodedSignature = base64Url.encode(signatureBytes).replaceAll('=', '');
 
   // Combine all parts to create the JWT
   return '$encodedHeader.$encodedPayload.$encodedSignature';
