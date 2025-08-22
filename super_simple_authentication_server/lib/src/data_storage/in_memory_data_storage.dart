@@ -18,7 +18,10 @@ class InMemoryDataStorage implements DataStorage {
     required String hashedOtp,
     required String expiresAt,
   }) async {
-    _data['$identifier:$channel'] = {'otp': hashedOtp, 'expiresAt': expiresAt};
+    _data['otps:$identifier:$channel'] = {
+      'otp': hashedOtp,
+      'expiresAt': expiresAt,
+    };
   }
 
   @override
@@ -68,7 +71,7 @@ class InMemoryDataStorage implements DataStorage {
     required String channel,
     required String now,
   }) async {
-    final key = '$identifier:$channel';
+    final key = 'otps:$identifier:$channel';
     final otp = _data[key]?['otp'] as String?;
     final expiresAt = _data[key]?['expiresAt'];
     if (otp == null || expiresAt == null) {
@@ -134,7 +137,7 @@ class InMemoryDataStorage implements DataStorage {
     required String identifier,
     required String channel,
   }) async {
-    final key = '$identifier:$channel';
+    final key = 'otps:$identifier:$channel';
     _data[key] = null;
   }
 

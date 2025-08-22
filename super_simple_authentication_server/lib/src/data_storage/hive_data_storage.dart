@@ -20,49 +20,28 @@ class HiveDataStorage implements DataStorage {
     initialize(
       databaseName: databaseName,
       databasePath: databasePath,
-      encryptionKey: encryptionKey,
+      encryptionCipher: encryptionKey,
     );
   }
 
   bool _initialized = false;
-  late final BoxCollection _db;
-  late final CollectionBox<Map> _usersBox;
-  late final CollectionBox<Map> _otpsBox;
-  late final CollectionBox<Map> _refreshTokensBox;
-  late final CollectionBox<Map> _sessionsBox;
-  late final CollectionBox<String> _emailsBox;
-  late final CollectionBox<String> _phoneNumbersBox;
+  late final Box<Map> _db;
   static const _uuid = Uuid();
 
   /// Initializes the database.
   Future<void> initialize({
     String databaseName = 'super_simple_authentication',
     String? databasePath,
-    HiveCipher? encryptionKey,
+    HiveCipher? encryptionCipher,
   }) async {
     if (_initialized) {
       return;
     }
-    _db = await BoxCollection.open(
+    _db = await Hive.openBox(
       databaseName,
-      {
-        'otps',
-        'refresh_tokens',
-        'sessions',
-        'users',
-        'emails',
-        'phone_numbers',
-      },
       path: databasePath,
-      key: encryptionKey,
+      encryptionCipher: encryptionCipher,
     );
-
-    _usersBox = await _db.openBox<Map>('users');
-    _otpsBox = await _db.openBox<Map>('otps');
-    _refreshTokensBox = await _db.openBox<Map>('refresh_tokens');
-    _sessionsBox = await _db.openBox<Map>('sessions');
-    _emailsBox = await _db.openBox<String>('emails');
-    _phoneNumbersBox = await _db.openBox<String>('phone_numbers');
 
     _initialized = true;
   }
@@ -74,7 +53,7 @@ class HiveDataStorage implements DataStorage {
     required String hashedOtp,
     required String expiresAt,
   }) {
-    return _otpsBox.put('$channel:$identifier', {
+    return _db.put('otp:$channel:$identifier', {
       'hashedOtp': hashedOtp,
       'expiresAt': expiresAt,
     });
@@ -87,7 +66,7 @@ class HiveDataStorage implements DataStorage {
     required String userId,
     String? parentToken,
   }) {
-    return _refreshTokensBox.put(refreshToken, {
+    return _db.put('refreshToken:$refreshToken', {
       'userId': userId,
       'sessionId': sessionId,
       'revoked': false,
@@ -98,7 +77,10 @@ class HiveDataStorage implements DataStorage {
   @override
   Future<String> createSession(String userId) async {
     final sessionId = _uuid.v4();
-    await _sessionsBox.put(sessionId, {'userId': userId, 'refreshedAt': null});
+    await _db.put('session:$sessionId', {
+      'userId': userId,
+      'refreshedAt': null,
+    });
     return sessionId;
   }
 
@@ -110,17 +92,17 @@ class HiveDataStorage implements DataStorage {
     String? salt,
   }) async {
     final userId = _uuid.v4();
-    await _usersBox.put(userId, {
+    await _db.put('user:$userId', {
       if (email != null) 'email': email,
       if (phoneNumber != null) 'phoneNumber': phoneNumber,
       if (hashedPassword != null) 'hashedPassword': hashedPassword,
       if (salt != null) 'salt': salt,
     });
     if (email != null) {
-      await _emailsBox.put(email, userId);
+      await _db.put('email:$email', {'userId': userId});
     }
     if (phoneNumber != null) {
-      await _phoneNumbersBox.put(phoneNumber, userId);
+      await _db.put('phoneNumber:$phoneNumber', {'userId': userId});
     }
     return userId;
   }
@@ -131,12 +113,12 @@ class HiveDataStorage implements DataStorage {
     required String channel,
     required String now,
   }) async {
-    final otp = await _otpsBox.get('$channel:$identifier');
+    final otp = _db.get('otp:$channel:$identifier');
     if (otp == null) return null;
     if (DateTime.parse(
       otp['expiresAt'] as String,
     ).isBefore(DateTime.parse(now))) {
-      await _otpsBox.delete('$channel:$identifier');
+      await _db.delete('otp:$channel:$identifier');
       return null;
     }
     return otp['hashedOtp'] as String;
@@ -146,7 +128,7 @@ class HiveDataStorage implements DataStorage {
   Future<({bool revoked, String sessionId, String userId})> getRefreshToken({
     required String refreshToken,
   }) async {
-    final refreshTokenData = await _refreshTokensBox.get(refreshToken);
+    final refreshTokenData = _db.get('refreshToken:$refreshToken');
     if (refreshTokenData == null) {
       return (revoked: false, sessionId: '', userId: '');
     }
@@ -159,11 +141,11 @@ class HiveDataStorage implements DataStorage {
 
   @override
   Future<List<User>> getUsersByEmail(String email) async {
-    final userId = await _emailsBox.get(email);
+    final userId = _db.get('email:$email')?['userId'] as String?;
     if (userId == null) {
       return [];
     }
-    final user = await _usersBox.get(userId);
+    final user = _db.get('user:$userId');
     return [
       (
         id: userId,
@@ -177,11 +159,11 @@ class HiveDataStorage implements DataStorage {
 
   @override
   Future<List<User>> getUsersByPhoneNumber(String phoneNumber) async {
-    final userId = await _phoneNumbersBox.get(phoneNumber);
+    final userId = _db.get('phoneNumber:$phoneNumber')?['userId'] as String?;
     if (userId == null) {
       return [];
     }
-    final user = await _usersBox.get(userId);
+    final user = _db.get('user:$userId');
     return [
       (
         id: userId,
@@ -198,16 +180,16 @@ class HiveDataStorage implements DataStorage {
     required String identifier,
     required String channel,
   }) {
-    return _otpsBox.delete('$channel:$identifier');
+    return _db.delete('otp:$channel:$identifier');
   }
 
   @override
   Future<void> revokeRefreshToken({required String refreshToken}) async {
-    final refreshTokenData = await _refreshTokensBox.get(refreshToken);
+    final refreshTokenData = _db.get('refreshToken:$refreshToken');
     if (refreshTokenData == null) {
       return;
     }
-    await _refreshTokensBox.put(refreshToken, {
+    await _db.put('refreshToken:$refreshToken', {
       ...refreshTokenData,
       'revoked': true,
     });
@@ -218,11 +200,11 @@ class HiveDataStorage implements DataStorage {
     required String sessionId,
     required String refreshedAt,
   }) async {
-    final sessionData = await _sessionsBox.get(sessionId);
+    final sessionData = _db.get('session:$sessionId');
     if (sessionData == null) {
       return;
     }
-    await _sessionsBox.put(sessionId, {
+    await _db.put('session:$sessionId', {
       ...sessionData,
       'refreshedAt': refreshedAt,
     });
