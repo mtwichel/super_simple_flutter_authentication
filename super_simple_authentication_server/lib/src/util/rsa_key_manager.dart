@@ -168,10 +168,11 @@ class RsaKeyManager {
       final asn1Parser = ASN1Parser(keyBytes);
       final topLevelSeq = asn1Parser.nextObject() as ASN1Sequence;
 
-      // Check if this is PKCS#8 format (3 elements) or PKCS#1 format (9 elements)
+      // Check if this is PKCS#8 format (3 elements) or PKCS#1 format
+      //(9 elements)
       if (topLevelSeq.elements == null || topLevelSeq.elements!.length < 3) {
         throw Exception(
-          'Invalid ASN.1 structure: expected at least 3 elements, got ${topLevelSeq.elements?.length ?? 0}',
+          '''Invalid ASN.1 structure: expected at least 3 elements, got ${topLevelSeq.elements?.length ?? 0}''',
         );
       }
 
@@ -197,7 +198,7 @@ class RsaKeyManager {
         if (privateKeySeq.elements == null ||
             privateKeySeq.elements!.length < 6) {
           throw Exception(
-            'Invalid RSA private key structure: expected at least 6 elements, got ${privateKeySeq.elements?.length ?? 0}',
+            '''Invalid RSA private key structure: expected at least 6 elements, got ${privateKeySeq.elements?.length ?? 0}''',
           );
         }
 
@@ -213,7 +214,7 @@ class RsaKeyManager {
         // PKCS#1 format: direct RSA private key
         if (values.length < 6) {
           throw Exception(
-            'Invalid PKCS#1 structure: expected at least 6 elements, got ${values.length}',
+            '''Invalid PKCS#1 structure: expected at least 6 elements, got ${values.length}''',
           );
         }
 
