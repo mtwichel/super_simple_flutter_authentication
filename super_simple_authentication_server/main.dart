@@ -15,7 +15,9 @@ Future<void> init(InternetAddress ip, int port) async {
 
   if (dataStorageType == 'hive') {
     final storage = HiveDataStorage();
-    await storage.initialize();
+    await storage.initialize(
+      databasePath: Platform.environment['HIVE_DATA_PATH'],
+    );
     dataStorage = storage;
   }
 
