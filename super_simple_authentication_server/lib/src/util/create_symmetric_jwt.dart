@@ -1,7 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
-import 'package:cryptography/cryptography.dart';
 import 'package:meta/meta.dart';
+import 'package:pointycastle/export.dart';
 
 /// Creates a JWT for the given email.
 Future<String> createSymmetricJwt({
@@ -13,7 +14,7 @@ Future<String> createSymmetricJwt({
   String? subject,
   String? issuer,
   Map<String, dynamic> additionalClaims = const {},
-  @visibleForTesting Hmac? hmac,
+  @visibleForTesting HMac? hmac,
 }) async {
   final payload = {
     ...additionalClaims,
@@ -41,16 +42,17 @@ Future<String> createSymmetricJwt({
   // Create the signature input
   final signatureInput = '$encodedHeader.$encodedPayload';
 
-  // Create the signature using Hmac
-  final resolvedHmac = hmac ?? Hmac.sha256();
-  final secretKeyBytes = SecretKey(base64Url.decode(secretKey));
-  final signatureBytes = await resolvedHmac.calculateMac(
-    utf8.encode(signatureInput),
-    secretKey: secretKeyBytes,
+  // Create the signature using HMAC-SHA256
+  final resolvedHmac = hmac ?? HMac(SHA256Digest(), 64);
+  final secretKeyBytes = base64Url.decode(secretKey);
+  resolvedHmac.init(KeyParameter(Uint8List.fromList(secretKeyBytes)));
+
+  final signatureInputBytes = utf8.encode(signatureInput);
+  final signatureBytes = resolvedHmac.process(
+    Uint8List.fromList(signatureInputBytes),
   );
-  final encodedSignature = base64Url
-      .encode(signatureBytes.bytes)
-      .replaceAll('=', '');
+
+  final encodedSignature = base64Url.encode(signatureBytes).replaceAll('=', '');
 
   // Combine all parts to create the JWT
   return '$encodedHeader.$encodedPayload.$encodedSignature';

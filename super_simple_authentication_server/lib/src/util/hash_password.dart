@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:cryptography/cryptography.dart';
 import 'package:meta/meta.dart';
+import 'package:pointycastle/export.dart';
 import 'package:super_simple_authentication_server/src/util/create_random_number.dart';
 
 /// A tuple of the hash and the salt.
 typedef HashedPassword = ({List<int> hash, List<int> salt});
 
-/// Calculates the hash of a password using the Argon2id algorithm. Returns
+/// Calculates the hash of a password using PBKDF2 with SHA-256. Returns
 /// a tuple of the hash and the salt.
 ///
 /// The hash is then peppered using the HMAC algorithm with the provided pepper.
@@ -18,30 +19,31 @@ typedef HashedPassword = ({List<int> hash, List<int> salt});
 /// not peppered.
 Future<HashedPassword> calculatePasswordHash(
   String password, {
-  int parallelism = 1,
-  int memory = 19000,
-  int iterations = 2,
+  int iterations = 100000,
   int hashLength = 32,
   List<int>? pepper,
   List<int>? salt,
-  @visibleForTesting Argon2id? argon2id,
-  @visibleForTesting Hmac? hmac,
+  @visibleForTesting PBKDF2KeyDerivator? pbkdf2,
+  @visibleForTesting HMac? hmac,
 }) async {
-  final resolvedArgon2id =
-      argon2id ??
-      Argon2id(
-        parallelism: parallelism,
-        memory: memory,
-        iterations: iterations,
-        hashLength: hashLength,
-      );
-
   final resolvedSalt = salt ?? generateRandomNumber();
-  final hashedPassword = await resolvedArgon2id.deriveKeyFromPassword(
-    password: password,
-    nonce: resolvedSalt,
+
+  // Use PBKDF2 with SHA-256 for password hashing
+  final resolvedPbkdf2 =
+      pbkdf2 ?? PBKDF2KeyDerivator(HMac(SHA256Digest(), 64))
+        ..init(
+          Pbkdf2Parameters(
+            Uint8List.fromList(resolvedSalt),
+            iterations,
+            hashLength,
+          ),
+        );
+
+  final passwordBytes = utf8.encode(password);
+  final hashedPasswordBytes = resolvedPbkdf2.process(
+    Uint8List.fromList(passwordBytes),
   );
-  final hashedPasswordBytes = await hashedPassword.extractBytes();
+
   final pepperEnvironmentVariable = Platform.environment['PASSWORD_PEPPER'];
   final resolvedPepper =
       pepper ??
@@ -50,14 +52,14 @@ Future<HashedPassword> calculatePasswordHash(
           : base64.decode(pepperEnvironmentVariable));
 
   if (resolvedPepper == null) {
-    return (hash: hashedPasswordBytes, salt: resolvedSalt);
+    return (hash: hashedPasswordBytes.toList(), salt: resolvedSalt);
   }
 
-  final resolvedHmac = hmac ?? Hmac.sha256();
-  final mac = await resolvedHmac.calculateMac(
-    hashedPasswordBytes,
-    secretKey: SecretKey(resolvedPepper),
-  );
+  // Apply pepper using HMAC-SHA256
+  final resolvedHmac =
+      hmac ?? HMac(SHA256Digest(), 64)
+        ..init(KeyParameter(Uint8List.fromList(resolvedPepper)));
+  final pepperedHash = resolvedHmac.process(hashedPasswordBytes);
 
-  return (hash: mac.bytes, salt: resolvedSalt);
+  return (hash: pepperedHash.toList(), salt: resolvedSalt);
 }

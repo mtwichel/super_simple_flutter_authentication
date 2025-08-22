@@ -250,7 +250,7 @@ class RsaKeyManager {
         } catch (e) {
           if (e is RangeError) {
             throw Exception(
-              'Range error while parsing PKCS#1 RSA key components: ${e.message}',
+              '''Range error while parsing PKCS#1 RSA key components: ${e.message}''',
             );
           }
           rethrow;
@@ -261,7 +261,7 @@ class RsaKeyManager {
         throw Exception('Invalid base64 encoding in private key: ${e.message}');
       } else if (e is RangeError) {
         throw Exception(
-          'Invalid key data: key appears to be truncated or corrupted. Error: ${e.message}',
+          '''Invalid key data: key appears to be truncated or corrupted. Error: ${e.message}''',
         );
       } else {
         rethrow;

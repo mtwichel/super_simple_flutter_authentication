@@ -1,14 +1,16 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
-import 'package:cryptography/cryptography.dart';
 import 'package:meta/meta.dart';
+import 'package:pointycastle/export.dart';
 
 /// Hashes an OTP using SHA-256.
 Future<String> hashOtp(
   String otp, {
-  @visibleForTesting HashAlgorithm? algorithm,
+  @visibleForTesting Digest? algorithm,
 }) async {
-  final resolvedAlgorithm = algorithm ?? Sha256();
-  final hash = await resolvedAlgorithm.hash(utf8.encode(otp));
-  return base64.encode(hash.bytes);
+  final resolvedAlgorithm = algorithm ?? SHA256Digest();
+  final otpBytes = utf8.encode(otp);
+  final hash = resolvedAlgorithm.process(Uint8List.fromList(otpBytes));
+  return base64.encode(hash);
 }
