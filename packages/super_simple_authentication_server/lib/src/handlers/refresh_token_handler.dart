@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:shared_authentication_objects/shared_authentication_objects.dart';
 import 'package:super_simple_authentication_server/src/data_storage/data_storage.dart';
 import 'package:super_simple_authentication_server/src/util/util.dart';
 
@@ -11,25 +10,19 @@ Handler refreshTokenHandler() {
     if (context.request.method != HttpMethod.post) {
       return Response(statusCode: HttpStatus.methodNotAllowed);
     }
-    final requestBody = await context.request.parse(
-      RefreshTokenRequest.fromJson,
-    );
+    final {'refreshToken': String refreshToken} = await context.request.map();
 
     final dataStorage = context.read<DataStorage>();
 
     final (:userId, :sessionId, :revoked) = await dataStorage.getRefreshToken(
-      refreshToken: requestBody.refreshToken,
+      refreshToken: refreshToken,
     );
 
     if (revoked) {
-      return Response.json(
-        body: const RefreshTokenResponse(error: RefreshTokenError.revoked),
-      );
+      return Response.json(body: {'error': 'Refresh token revoked'});
     }
 
-    await dataStorage.revokeRefreshToken(
-      refreshToken: requestBody.refreshToken,
-    );
+    await dataStorage.revokeRefreshToken(refreshToken: refreshToken);
 
     await dataStorage.updateSession(
       sessionId: sessionId,
@@ -48,11 +41,9 @@ Handler refreshTokenHandler() {
       sessionId: sessionId,
       refreshToken: newRefreshToken,
       userId: userId,
-      parentToken: requestBody.refreshToken,
+      parentToken: refreshToken,
     );
 
-    return Response.json(
-      body: RefreshTokenResponse(token: jwt, refreshToken: newRefreshToken),
-    );
+    return Response.json(body: {'token': jwt, 'refreshToken': newRefreshToken});
   };
 }

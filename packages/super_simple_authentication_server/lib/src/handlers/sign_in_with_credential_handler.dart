@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:shared_authentication_objects/shared_authentication_objects.dart';
 import 'package:super_simple_authentication_server/src/data_storage/data_storage.dart';
 import 'package:super_simple_authentication_server/src/integrations/integrations.dart';
 import 'package:super_simple_authentication_server/src/util/util.dart';
@@ -13,19 +12,14 @@ Handler signInWithCredentialHandler() {
       return Response(statusCode: HttpStatus.methodNotAllowed);
     }
 
-    final SignInWithCredentialRequest(
-      credential: Credential(type: type, token: token),
-    ) = await context.request.parse(SignInWithCredentialRequest.fromJson);
+    final {'credential': String credential, 'type': String type} =
+        await context.request.map();
 
-    final parts = token.split('.');
+    final parts = credential.split('.');
     if (parts.length != 3) {
       return Response.json(
         statusCode: HttpStatus.unauthorized,
-        body: const VerifyOtpResponse(
-          token: null,
-          error: SignInError.invalid3rdPartyCredential,
-          refreshToken: null,
-        ),
+        body: {'error': 'Invalid 3rd party credential'},
       );
     }
 
@@ -33,43 +27,31 @@ Handler signInWithCredentialHandler() {
 
     final String email;
     switch (type) {
-      case CredentialType.google:
+      case 'google':
         try {
           final clientId = environment['GOOGLE_CLIENT_ID'];
           if (clientId == null || clientId.isEmpty) {
             return Response.json(
               statusCode: HttpStatus.internalServerError,
-              body: const VerifyOtpResponse(
-                token: null,
-                error: SignInError.serverError,
-                refreshToken: null,
-              ),
+              body: {'error': 'Server error'},
             );
           }
           final googleVerifier = SignInWithGoogle(clientId: clientId);
-          final extractedEmail = await googleVerifier.verifyToken(token);
+          final extractedEmail = await googleVerifier.verifyToken(credential);
           if (extractedEmail.isEmpty) {
             return Response.json(
               statusCode: HttpStatus.unauthorized,
-              body: const VerifyOtpResponse(
-                token: null,
-                error: SignInError.invalid3rdPartyCredential,
-                refreshToken: null,
-              ),
+              body: {'error': 'Invalid 3rd party credential'},
             );
           }
           email = extractedEmail;
         } catch (_) {
           return Response.json(
             statusCode: HttpStatus.unauthorized,
-            body: const VerifyOtpResponse(
-              token: null,
-              error: SignInError.invalid3rdPartyCredential,
-              refreshToken: null,
-            ),
+            body: {'error': 'Invalid 3rd party credential'},
           );
         }
-      case CredentialType.apple:
+      case 'apple':
         try {
           final bundleId = environment['APPLE_BUNDLE_ID'];
           final serviceId = environment['APPLE_SERVICE_ID'];
@@ -77,11 +59,7 @@ Handler signInWithCredentialHandler() {
           if (bundleId == null || bundleId.isEmpty) {
             return Response.json(
               statusCode: HttpStatus.internalServerError,
-              body: const VerifyOtpResponse(
-                token: null,
-                error: SignInError.serverError,
-                refreshToken: null,
-              ),
+              body: {'error': 'Server error'},
             );
           }
 
@@ -89,41 +67,32 @@ Handler signInWithCredentialHandler() {
             bundleId: bundleId,
             serviceId: serviceId,
           );
-          final extractedEmail = await appleVerifier.verifyToken(token);
+          final extractedEmail = await appleVerifier.verifyToken(credential);
           if (extractedEmail.isEmpty) {
             return Response.json(
               statusCode: HttpStatus.unauthorized,
-              body: const VerifyOtpResponse(
-                token: null,
-                error: SignInError.invalid3rdPartyCredential,
-                refreshToken: null,
-              ),
+              body: {'error': 'Invalid 3rd party credential'},
             );
           }
           email = extractedEmail;
         } catch (_) {
           return Response.json(
             statusCode: HttpStatus.unauthorized,
-            body: const VerifyOtpResponse(
-              token: null,
-              error: SignInError.invalid3rdPartyCredential,
-              refreshToken: null,
-            ),
+            body: {'error': 'Invalid 3rd party credential'},
           );
         }
+      default:
+        return Response.json(
+          statusCode: HttpStatus.unauthorized,
+          body: {'error': 'Invalid 3rd party credential'},
+        );
     }
 
     final dataStorage = context.read<DataStorage>();
     final String userId;
     final users = await dataStorage.getUsersByEmail(email);
     if (users.length > 1) {
-      return Response.json(
-        body: const VerifyOtpResponse(
-          token: null,
-          error: SignInError.unknown,
-          refreshToken: null,
-        ),
-      );
+      return Response.json(body: {'error': 'Unknown error'});
     }
     final isNewUser = users.isEmpty;
     if (users.isEmpty) {
@@ -147,11 +116,6 @@ Handler signInWithCredentialHandler() {
       userId: userId,
     );
 
-    return Response.json(
-      body: SignInWithCredentialResponse(
-        token: jwt,
-        refreshToken: refreshToken,
-      ),
-    );
+    return Response.json(body: {'token': jwt, 'refreshToken': refreshToken});
   };
 }

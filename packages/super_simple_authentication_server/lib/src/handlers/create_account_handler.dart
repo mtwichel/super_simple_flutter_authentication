@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:shared_authentication_objects/shared_authentication_objects.dart';
 import 'package:super_simple_authentication_server/src/data_storage/data_storage.dart';
 import 'package:super_simple_authentication_server/src/util/util.dart';
 
@@ -12,16 +11,15 @@ Handler createAccountHandler() {
     if (context.request.method != HttpMethod.post) {
       return Response(statusCode: HttpStatus.methodNotAllowed);
     }
-    final requestBody = await context.request.parse(
-      CreateAccountWithEmailAndPasswordRequest.fromJson,
-    );
+    final {'email': String email, 'password': String password} =
+        await context.request.map();
 
     final dataStorage = context.read<DataStorage>();
 
-    final hashedPassword = await calculatePasswordHash(requestBody.password);
+    final hashedPassword = await calculatePasswordHash(password);
 
     final userId = await dataStorage.createUser(
-      email: requestBody.email,
+      email: email,
       hashedPassword: base64.encode(hashedPassword.hash),
       salt: base64.encode(hashedPassword.salt),
     );
@@ -41,11 +39,6 @@ Handler createAccountHandler() {
       userId: userId,
     );
 
-    return Response.json(
-      body: CreateAccountWithEmailAndPasswordResponse(
-        token: jwt,
-        refreshToken: refreshToken,
-      ),
-    );
+    return Response.json(body: {'token': jwt, 'refreshToken': refreshToken});
   };
 }

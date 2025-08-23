@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:shared_authentication_objects/shared_authentication_objects.dart';
 import 'package:super_simple_authentication_server/src/data_storage/data_storage.dart';
 import 'package:super_simple_authentication_server/src/util/util.dart';
 
@@ -30,8 +29,6 @@ Handler signInAnonymouslyHandler() {
       userId: userId,
     );
 
-    return Response.json(
-      body: SignInAnonymouslyResponse(token: jwt, refreshToken: refreshToken),
-    );
+    return Response.json(body: {'token': jwt, 'refreshToken': refreshToken});
   };
 }

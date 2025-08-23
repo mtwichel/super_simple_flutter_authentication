@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_authentication_objects/shared_authentication_objects.dart';
 import 'package:super_simple_authentication_flutter/super_simple_authentication_flutter.dart';
 
 const _accessTokenKey = 'accessToken';
@@ -82,13 +81,11 @@ class SuperSimpleAuthentication {
     );
   }
 
-  Future<T> _makeRequest<T>(
+  Future<Map<String, dynamic>> _makeRequest(
     String path, {
     required String method,
-    required FromJson<T> responseFromJson,
     Object? body,
     Map<String, String> headers = const {},
-    Map<String, String> queryParameters = const {},
   }) async {
     final request = http.Request(
       method,
@@ -101,8 +98,7 @@ class SuperSimpleAuthentication {
     }
     final streamedResponse = await _client.send(request);
     final response = await http.Response.fromStream(streamedResponse);
-    final json = Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-    return responseFromJson(json);
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
   }
 
   String? _accessToken;
@@ -170,19 +166,18 @@ class SuperSimpleAuthentication {
     required String email,
     required String password,
   }) async {
-    final SignInWithEmailAndPasswordResponse(
-      token: accessToken,
-      :refreshToken,
-      :error
-    ) = await _makeRequest(
+    final {
+      'token': String? accessToken,
+      'refreshToken': String? refreshToken,
+      'error': String? error,
+    } = await _makeRequest(
       _endpointPaths.signInWithEmailAndPassword,
       method: 'POST',
-      body: SignInWithEmailAndPasswordRequest(email: email, password: password),
-      responseFromJson: SignInWithEmailAndPasswordResponse.fromJson,
+      body: {'email': email, 'password': password},
     );
 
     if (error != null) {
-      throw SignInException(error);
+      throw SignInException(SignInError.values.byName(error));
     }
     if (accessToken == null || refreshToken == null) {
       throw const SignInException(SignInError.unknown);
@@ -200,21 +195,17 @@ class SuperSimpleAuthentication {
     required String email,
     required String password,
   }) async {
-    final CreateAccountWithEmailAndPasswordResponse(
-      token: accessToken,
-      :refreshToken,
-      :error
-    ) = await _makeRequest(
+    final {
+      'token': String? accessToken,
+      'refreshToken': String? refreshToken,
+      'error': String? error,
+    } = await _makeRequest(
       _endpointPaths.createAccountWithEmailAndPassword,
       method: 'POST',
-      body: CreateAccountWithEmailAndPasswordRequest(
-        email: email,
-        password: password,
-      ),
-      responseFromJson: CreateAccountWithEmailAndPasswordResponse.fromJson,
+      body: {'email': email, 'password': password},
     );
     if (error != null) {
-      throw SignInException(error);
+      throw SignInException(SignInError.values.byName(error));
     }
     if (accessToken == null || refreshToken == null) {
       throw const SignInException(SignInError.unknown);
@@ -229,8 +220,7 @@ class SuperSimpleAuthentication {
     await _makeRequest(
       _endpointPaths.sendEmailOtp,
       method: 'POST',
-      body: SendOtpRequest(identifier: email, type: OtpType.email),
-      responseFromJson: SendOtpResponse.fromJson,
+      body: {'identifier': email, 'type': 'email'},
     );
   }
 
@@ -239,15 +229,17 @@ class SuperSimpleAuthentication {
     required String email,
     required String otp,
   }) async {
-    final VerifyOtpResponse(token: accessToken, :refreshToken, :error) =
-        await _makeRequest(
+    final {
+      'token': String? accessToken,
+      'refreshToken': String? refreshToken,
+      'error': String? error,
+    } = await _makeRequest(
       _endpointPaths.verifyEmailOtp,
       method: 'POST',
-      body: VerifyOtpRequest(identifier: email, otp: otp, type: OtpType.email),
-      responseFromJson: VerifyOtpResponse.fromJson,
+      body: {'identifier': email, 'otp': otp, 'type': 'email'},
     );
     if (error != null) {
-      throw SignInException(error);
+      throw SignInException(SignInError.values.byName(error));
     }
     if (accessToken == null || refreshToken == null) {
       throw const SignInException(SignInError.unknown);
@@ -262,8 +254,7 @@ class SuperSimpleAuthentication {
     await _makeRequest(
       _endpointPaths.sendPhoneOtp,
       method: 'POST',
-      body: SendOtpRequest(identifier: phoneNumber, type: OtpType.phone),
-      responseFromJson: SendOtpResponse.fromJson,
+      body: {'identifier': phoneNumber, 'type': 'phone'},
     );
   }
 
@@ -272,19 +263,17 @@ class SuperSimpleAuthentication {
     required String phoneNumber,
     required String otp,
   }) async {
-    final VerifyOtpResponse(token: accessToken, :refreshToken, :error) =
-        await _makeRequest(
+    final {
+      'token': String? accessToken,
+      'refreshToken': String? refreshToken,
+      'error': String? error,
+    } = await _makeRequest(
       _endpointPaths.verifyPhoneOtp,
       method: 'POST',
-      body: VerifyOtpRequest(
-        identifier: phoneNumber,
-        otp: otp,
-        type: OtpType.phone,
-      ),
-      responseFromJson: VerifyOtpResponse.fromJson,
+      body: {'identifier': phoneNumber, 'otp': otp, 'type': 'phone'},
     );
     if (error != null) {
-      throw SignInException(error);
+      throw SignInException(SignInError.values.byName(error));
     }
     if (accessToken == null || refreshToken == null) {
       throw const SignInException(SignInError.unknown);
@@ -294,21 +283,20 @@ class SuperSimpleAuthentication {
 
   /// Signs in a user with the given 3rd party[credential].
   Future<void> signInWithCredential(
-    Credential credential,
+    String credential,
   ) async {
-    final SignInWithCredentialResponse(
-      token: accessToken,
-      :refreshToken,
-      :error
-    ) = await _makeRequest(
+    final {
+      'token': String? accessToken,
+      'refreshToken': String? refreshToken,
+      'error': String? error,
+    } = await _makeRequest(
       _endpointPaths.signInWithCredential,
       method: 'POST',
-      body: SignInWithCredentialRequest(credential: credential),
-      responseFromJson: SignInWithCredentialResponse.fromJson,
+      body: {'credential': credential},
     );
 
     if (error != null) {
-      throw SignInException(error);
+      throw SignInException(SignInError.values.byName(error));
     }
     if (accessToken == null || refreshToken == null) {
       throw const SignInException(SignInError.unknown);
@@ -318,14 +306,17 @@ class SuperSimpleAuthentication {
 
   /// Signs in a user anonymously.
   Future<void> signInAnonymously() async {
-    final SignInAnonymouslyResponse(token: accessToken, :refreshToken, :error) =
-        await _makeRequest(
+    final {
+      'token': String? accessToken,
+      'refreshToken': String? refreshToken,
+      'error': String? error,
+    } = await _makeRequest(
       _endpointPaths.signInAnonymously,
       method: 'POST',
-      responseFromJson: SignInAnonymouslyResponse.fromJson,
+      body: {},
     );
     if (error != null) {
-      throw SignInException(error);
+      throw SignInException(SignInError.values.byName(error));
     }
     if (accessToken == null || refreshToken == null) {
       throw const SignInException(SignInError.unknown);

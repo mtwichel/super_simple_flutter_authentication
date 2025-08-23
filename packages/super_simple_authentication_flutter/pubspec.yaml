@@ -13,8 +13,6 @@ dependencies:
     sdk: flutter
   flutter_secure_storage: ^9.2.4
   http: ^1.5.0
-  shared_authentication_objects:
-    path: ../super_simple_authentication_server/packages/shared_authentication_objects
 
 dev_dependencies:
   flutter_test:

@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:shared_authentication_objects/shared_authentication_objects.dart';
 import 'package:super_simple_authentication_server/src/data_storage/data_storage.dart';
 import 'package:super_simple_authentication_server/src/util/util.dart';
 import 'package:super_simple_authentication_server/super_simple_authentication_server.dart';
@@ -20,14 +19,12 @@ Handler sendOtpHandler({
     if (context.request.method != HttpMethod.post) {
       return Response(statusCode: HttpStatus.methodNotAllowed);
     }
-    final requestBody = await context.request.parse(SendOtpRequest.fromJson);
+    final {'identifier': String identifier, 'type': String type} =
+        await context.request.map();
 
     final dataStorage = context.read<DataStorage>();
 
-    await dataStorage.revokeOtpsFor(
-      identifier: requestBody.identifier,
-      channel: requestBody.type.name,
-    );
+    await dataStorage.revokeOtpsFor(identifier: identifier, channel: type);
 
     final environment = context.read<Environment>();
     final testingEmail = environment['TESTING_EMAIL'];
@@ -35,8 +32,7 @@ Handler sendOtpHandler({
     final testingOtp = environment['TESTING_OTP'];
 
     final usingTestOtp =
-        (requestBody.identifier == testingEmail ||
-            requestBody.identifier == testingPhoneNumber) &&
+        (identifier == testingEmail || identifier == testingPhoneNumber) &&
         testingOtp != null;
 
     final otp = usingTestOtp ? testingOtp : createOtp();
@@ -46,8 +42,8 @@ Handler sendOtpHandler({
     final expiresAt = now.add(otpExpiration);
 
     await dataStorage.createOtp(
-      identifier: requestBody.identifier,
-      channel: requestBody.type.name,
+      identifier: identifier,
+      channel: type,
       hashedOtp: hashedOtp,
       expiresAt: expiresAt.toIso8601String(),
     );
@@ -56,26 +52,26 @@ Handler sendOtpHandler({
       // ignore: avoid_print
       print('OTP: $otp');
     } else if (!usingTestOtp) {
-      switch (requestBody.type) {
-        case OtpType.email:
+      switch (type) {
+        case 'email':
           final sendgrid = context.read<Sendgrid>();
           await sendgrid.sendEmail(
-            to: requestBody.identifier,
+            to: identifier,
             subject: emailSubject ?? 'Your OTP for $fromName',
             body: 'Your OTP is $otp',
             from: fromEmail,
           );
-        case OtpType.phone:
+        case 'phone':
           final smsProvider = context.read<SmsProvider>();
           await smsProvider.sendSms(
-            requestBody.identifier,
+            identifier,
             'Your $fromName verification code is $otp',
           );
       }
     }
 
     return Response.json(
-      body: SendOtpResponse(expiresAt: expiresAt, expiresIn: otpExpiration),
+      body: {'expiresAt': expiresAt, 'expiresIn': otpExpiration},
     );
   };
 }
