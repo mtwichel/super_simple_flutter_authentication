@@ -3,7 +3,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:super_simple_authentication_server/src/util/rsa_key_manager.dart';
+import 'package:super_simple_authentication_toolkit/src/util/rsa_key_manager.dart';
 
 /// Utility script to generate RSA key pairs for testing.
 /// This generates both private and public keys in PEM format.
