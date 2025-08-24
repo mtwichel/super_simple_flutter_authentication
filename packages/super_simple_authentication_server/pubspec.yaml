@@ -16,6 +16,8 @@ dependencies:
   pointycastle: ^4.0.0
   postgres: ^3.5.6
   postgres_builder: ^2.5.0
+  super_simple_authentication_toolkit:
+    path: ../super_simple_authentication_toolkit
   uuid: ^4.5.1
 
 dev_dependencies:

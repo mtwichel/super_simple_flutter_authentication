@@ -1,0 +1,16 @@
+name: super_simple_authentication_postgres_data_storage
+description: A DataStorage that stores information to Postgres
+version: 0.0.1
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  postgres_builder: ^2.5.0
+  super_simple_authentication_toolkit:
+    path: ../super_simple_authentication_toolkit
+
+dev_dependencies:
+  mocktail: ^1.0.4
+  test: ^1.26.2
+  very_good_analysis: ^9.0.0

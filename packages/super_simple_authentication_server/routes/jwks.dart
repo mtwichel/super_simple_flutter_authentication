@@ -1,5 +1,5 @@
 import 'package:dart_frog/dart_frog.dart';
-import 'package:super_simple_authentication_server/src/util/rsa_key_manager.dart';
+import 'package:super_simple_authentication_toolkit/src/util/rsa_key_manager.dart';
 
 /// JWKS (JSON Web Key Set) endpoint that serves public keys for JWT
 /// verification.

@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:postgres_builder/postgres_builder.dart';
-import 'package:super_simple_authentication_server/src/data_storage/data_storage.dart';
-import 'package:super_simple_authentication_server/src/data_storage/hive_data_storage.dart';
-import 'package:super_simple_authentication_server/src/data_storage/in_memory_data_storage.dart';
-import 'package:super_simple_authentication_server/src/data_storage/postgres_data_storage.dart';
+import 'package:super_simple_authentication_toolkit/super_simple_authentication_toolkit.dart';
+
+import '../super_simple_authentication_hive_data_storage/lib/src/hive_data_storage.dart';
+import '../super_simple_authentication_postgres_data_storage/lib/src/postgres_data_storage.dart';
 
 late DataStorage dataStorage;
 
@@ -54,7 +54,11 @@ Future<void> init(InternetAddress ip, int port) async {
       settings: const ConnectionSettings(sslMode: SslMode.disable),
     );
 
-    final storage = PostgresDataStorage(database);
+    final storage = PostgresDataStorage();
+    await storage.initialize(
+      endpoint: endpoint,
+      settings: const ConnectionSettings(sslMode: SslMode.disable),
+    );
     dataStorage = storage;
   }
 }

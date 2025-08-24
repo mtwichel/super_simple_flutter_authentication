@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:super_simple_authentication_server/src/util/util.dart';
+import 'package:super_simple_authentication_toolkit/src/util/util.dart';
 
 import '../main.dart';
 
