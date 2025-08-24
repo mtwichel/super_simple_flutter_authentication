@@ -7,8 +7,7 @@ environment:
 
 dependencies:
   postgres_builder: ^2.5.0
-  super_simple_authentication_toolkit:
-    path: ../super_simple_authentication_toolkit
+  super_simple_authentication_toolkit: ^0.0.1-dev.1
 
 dev_dependencies:
   mocktail: ^1.0.4
