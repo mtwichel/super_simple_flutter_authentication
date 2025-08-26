@@ -9,3 +9,4 @@ export 'hash_otp.dart';
 export 'hash_password.dart';
 export 'rsa_key_manager.dart';
 export 'user_id.dart';
+export 'verify_jwt.dart';
