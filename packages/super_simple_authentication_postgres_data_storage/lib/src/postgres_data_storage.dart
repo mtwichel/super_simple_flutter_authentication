@@ -6,6 +6,7 @@ import 'package:super_simple_authentication_toolkit/super_simple_authentication_
 /// PostgreSQL.
 /// {@endtemplate}
 class PostgresDataStorage extends DataStorage {
+  /// {@macro postgres_data_storage}
   PostgresDataStorage();
 
   /// {@macro postgres_data_storage}
