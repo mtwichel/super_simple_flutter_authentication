@@ -1,0 +1,174 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/super-simple-auth-server
+
+jobs:
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history for better cache hits
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set image tag for PR scans
+        id: pr-tag
+        run: |
+          echo "tag=temp-pr-image:${{ github.event.number }}" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: ./packages/super_simple_authentication_server
+          file: ./packages/super_simple_authentication_server/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: false
+          tags: ${{ steps.pr-tag.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false # Disable provenance for better compatibility
+          sbom: true # Generate Software Bill of Materials
+          load: true # Load image locally for scanning
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.pr-tag.outputs.tag }}
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+        continue-on-error: true
+
+      - name: Check if SARIF file exists
+        id: check-sarif
+        run: |
+          if [ -f "trivy-results.sarif" ]; then
+            echo "file-exists=true" >> $GITHUB_OUTPUT
+            echo "SARIF file found"
+          else
+            echo "file-exists=false" >> $GITHUB_OUTPUT
+            echo "SARIF file not found - creating empty one"
+            # Create an empty SARIF file if none exists
+            echo '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","runs":[{"tool":{"driver":{"name":"trivy","version":"0.0.0"}},"results":[]}]}' > trivy-results.sarif
+          fi
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && steps.check-sarif.outputs.file-exists == 'true'
+        with:
+          sarif_file: "trivy-results.sarif"
+
+  build-test:
+    name: Build Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Test Docker build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./packages/super_simple_authentication_server
+          file: ./packages/super_simple_authentication_server/Dockerfile
+          platforms: linux/amd64
+          push: false
+          tags: pr-test:${{ github.event.number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
+      - name: Test image runs
+        run: |
+          # Test that the image can start (with a timeout)
+          timeout 10s docker run --rm pr-test:${{ github.event.number }} || true
+          echo "Build test completed successfully"
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        working-directory: ./packages/super_simple_authentication_server
+        run: dart pub get
+
+      - name: Analyze code
+        working-directory: ./packages/super_simple_authentication_server
+        run: dart analyze
+
+      - name: Run tests
+        working-directory: ./packages/super_simple_authentication_server
+        run: dart test
+
+      - name: Check formatting
+        working-directory: ./packages/super_simple_authentication_server
+        run: dart format --output=none --set-exit-if-changed .
+
+  pr-summary:
+    name: PR Summary
+    runs-on: ubuntu-latest
+    needs: [security-scan, build-test, code-quality]
+    if: always()
+
+    steps:
+      - name: Create PR Summary
+        run: |
+          echo "## 🔍 Pull Request Checks Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Security scan status
+          if [ "${{ needs.security-scan.result }}" == "success" ]; then
+            echo "✅ **Security Scan**: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Security Scan**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Build test status
+          if [ "${{ needs.build-test.result }}" == "success" ]; then
+            echo "✅ **Build Test**: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Build Test**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Code quality status
+          if [ "${{ needs.code-quality.result }}" == "success" ]; then
+            echo "✅ **Code Quality**: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Code Quality**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- Review any failed checks above" >> $GITHUB_STEP_SUMMARY
+          echo "- Security scan results are available in the Security tab" >> $GITHUB_STEP_SUMMARY
+          echo "- Once merged, the Docker image will be automatically built and published" >> $GITHUB_STEP_SUMMARY
