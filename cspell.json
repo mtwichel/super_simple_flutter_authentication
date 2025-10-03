@@ -6,6 +6,10 @@
   "dictionaryDefinitions": [],
   "dictionaries": [],
   "words": [
+    "appuser",
+    "aquasecurity",
+    "Buildx",
+    "cves",
     "Derivator",
     "endtemplate",
     "fromt",
@@ -15,6 +19,7 @@
     "pkcs",
     "pointycastle",
     "pubspec",
+    "sarif",
     "sendgrid",
     "subosito",
     "textbelt",
