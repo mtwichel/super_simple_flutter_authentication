@@ -1,4 +1,4 @@
-import 'package:postgres_builder/postgres_builder.dart';
+import 'package:postgres/postgres.dart';
 import 'package:super_simple_authentication_toolkit/super_simple_authentication_toolkit.dart';
 
 /// {@template postgres_data_storage}
@@ -10,22 +10,19 @@ class PostgresDataStorage extends DataStorage {
   PostgresDataStorage();
 
   /// {@macro postgres_data_storage}
-  PostgresDataStorage.fromPostgresBuilder(this._database);
+  PostgresDataStorage.fromConnection(this._connection);
 
-  late final PostgresBuilder _database;
+  late final Connection _connection;
 
   /// Initializes the data storage with a PostgresBuilder instance.
   Future<void> initialize({
     required Endpoint endpoint,
     ConnectionSettings? settings,
   }) async {
-    final tempDatabase = DirectPostgresBuilder();
-    await tempDatabase.initialize(
-      endpoint: endpoint,
+    _connection = await Connection.open(
+      endpoint,
       settings: settings,
     );
-
-    _database = tempDatabase;
   }
 
   @override
@@ -34,27 +31,34 @@ class PostgresDataStorage extends DataStorage {
     required String refreshToken,
     required String userId,
     String? parentToken,
-  }) {
-    return _database.execute(
-      Insert([
-        {
-          'user_id': userId,
-          'token': refreshToken,
-          'session_id': sessionId,
-          if (parentToken != null) 'parent_token': parentToken,
-        },
-      ], into: 'auth.refresh_tokens'),
+  }) async {
+    await _connection.execute(
+      Sql.named('''
+        INSERT INTO auth.refresh_tokens (user_id, token, session_id, parent_token)
+        VALUES (@userId, @refreshToken, @sessionId, @parentToken)
+      '''),
+      parameters: {
+        'userId': userId,
+        'refreshToken': refreshToken,
+        'sessionId': sessionId,
+        'parentToken': parentToken,
+      },
     );
   }
 
   @override
-  Future<String> createSession(String userId) {
-    return _database.mappedSingleQuery(
-      Insert([
-        {'user_id': userId},
-      ], into: 'auth.sessions'),
-      fromJson: (row) => row['id'] as String,
+  Future<String> createSession(String userId) async {
+    final result = await _connection.execute(
+      Sql.named('''
+        INSERT INTO auth.sessions (user_id)
+        VALUES (@userId)
+        RETURNING id
+      '''),
+      parameters: {
+        'userId': userId,
+      },
     );
+    return result.first.first! as String;
   }
 
   @override
@@ -63,50 +67,56 @@ class PostgresDataStorage extends DataStorage {
     String? phoneNumber,
     String? hashedPassword,
     String? salt,
-  }) {
-    return _database.mappedSingleQuery(
-      Insert([
-        {
-          if (email != null) 'email': email,
-          if (phoneNumber != null) 'phone_number': phoneNumber,
-          if (hashedPassword != null) 'password': hashedPassword,
-          if (salt != null) 'salt': salt,
-        },
-      ], into: 'users'),
-      fromJson: (row) => row['id'] as String,
+  }) async {
+    final result = await _connection.execute(
+      Sql.named('''
+        INSERT INTO users (email, phone_number, password, salt)
+        VALUES (@email, @phoneNumber, @hashedPassword, @salt)
+        RETURNING id
+      '''),
+      parameters: {
+        'email': email,
+        'phoneNumber': phoneNumber,
+        'hashedPassword': hashedPassword,
+        'salt': salt,
+      },
     );
+    return result.first.first! as String;
   }
 
   @override
   Future<({bool revoked, String sessionId, String userId})> getRefreshToken({
     required String refreshToken,
-  }) {
-    return _database.mappedSingleQuery(
-      Select(
-        [
-          const Column('user_id'),
-          const Column('session_id'),
-          const Column('revoked'),
-        ],
-        from: 'auth.refresh_tokens',
-        where: const Column('token').equals(refreshToken),
-      ),
-      fromJson: (row) => (
-        userId: row['user_id'] as String,
-        sessionId: row['session_id'] as String,
-        revoked: row['revoked'] as bool,
-      ),
+  }) async {
+    final result = await _connection.execute(
+      Sql.named('''
+        SELECT user_id, session_id, revoked
+        FROM auth.refresh_tokens
+        WHERE token = @refreshToken
+      '''),
+      parameters: {
+        'refreshToken': refreshToken,
+      },
+    );
+    final row = result.first;
+    return (
+      userId: row[0]! as String,
+      sessionId: row[1]! as String,
+      revoked: row[2]! as bool,
     );
   }
 
   @override
-  Future<void> revokeRefreshToken({required String refreshToken}) {
-    return _database.execute(
-      Update(
-        {'revoked': true},
-        from: 'auth.refresh_tokens',
-        where: const Column('token').equals(refreshToken),
-      ),
+  Future<void> revokeRefreshToken({required String refreshToken}) async {
+    await _connection.execute(
+      Sql.named('''
+        UPDATE auth.refresh_tokens
+        SET revoked = true
+        WHERE token = @refreshToken
+      '''),
+      parameters: {
+        'refreshToken': refreshToken,
+      },
     );
   }
 
@@ -114,13 +124,17 @@ class PostgresDataStorage extends DataStorage {
   Future<void> updateSession({
     required String sessionId,
     required String refreshedAt,
-  }) {
-    return _database.execute(
-      Update(
-        {'refreshed_at': refreshedAt},
-        from: 'auth.sessions',
-        where: const Column('id').equals(sessionId),
-      ),
+  }) async {
+    await _connection.execute(
+      Sql.named('''
+        UPDATE auth.sessions
+        SET refreshed_at = @refreshedAt
+        WHERE id = @sessionId
+      '''),
+      parameters: {
+        'sessionId': sessionId,
+        'refreshedAt': refreshedAt,
+      },
     );
   }
 
@@ -128,15 +142,17 @@ class PostgresDataStorage extends DataStorage {
   Future<void> revokeOtpsFor({
     required String identifier,
     required String channel,
-  }) {
-    return _database.execute(
-      Update(
-        {'revoked': true},
-        from: 'auth.otps',
-        where:
-            const Column('identifier').equals(identifier) &
-            const Column('channel').equals(channel),
-      ),
+  }) async {
+    await _connection.execute(
+      Sql.named('''
+        UPDATE auth.otps
+        SET revoked = true
+        WHERE identifier = @identifier AND channel = @channel
+      '''),
+      parameters: {
+        'identifier': identifier,
+        'channel': channel,
+      },
     );
   }
 
@@ -146,65 +162,69 @@ class PostgresDataStorage extends DataStorage {
     required String channel,
     required String hashedOtp,
     required String expiresAt,
-  }) {
-    return _database.execute(
-      Insert([
-        {
-          'identifier': identifier,
-          'otp': hashedOtp,
-          'channel': channel,
-          'expires_at': expiresAt,
-        },
-      ], into: 'auth.otps'),
+  }) async {
+    await _connection.execute(
+      Sql.named('''
+        INSERT INTO auth.otps (identifier, otp, channel, expires_at)
+        VALUES (@identifier, @hashedOtp, @channel, @expiresAt)
+      '''),
+      parameters: {
+        'identifier': identifier,
+        'hashedOtp': hashedOtp,
+        'channel': channel,
+        'expiresAt': expiresAt,
+      },
     );
   }
 
   @override
-  Future<List<User>> getUsersByEmail(String email) {
-    return _database.mappedQuery(
-      Select(
-        [
-          const Column('id'),
-          const Column('email'),
-          const Column('password'),
-          const Column('salt'),
-          const Column('phone_number'),
-        ],
-        from: 'users',
-        where: const Column('email').equals(email),
-      ),
-      fromJson: (row) => (
-        id: row['id'] as String,
-        email: row['email'] as String,
-        hashedPassword: row['password'] as String,
-        salt: row['salt'] as String,
-        phoneNumber: null,
-      ),
+  Future<List<User>> getUsersByEmail(String email) async {
+    final result = await _connection.execute(
+      Sql.named('''
+        SELECT id, email, password, salt, phone_number
+        FROM users
+        WHERE email = @email
+      '''),
+      parameters: {
+        'email': email,
+      },
     );
+    return result
+        .map(
+          (row) => (
+            id: row[0]! as String,
+            email: row[1]! as String,
+            hashedPassword: row[2]! as String,
+            salt: row[3]! as String,
+            phoneNumber: null,
+          ),
+        )
+        .toList();
   }
 
   @override
-  Future<List<User>> getUsersByPhoneNumber(String phoneNumber) {
-    return _database.mappedQuery(
-      Select(
-        [
-          const Column('id'),
-          const Column('phone_number'),
-          const Column('password'),
-          const Column('salt'),
-          const Column('email'),
-        ],
-        from: 'users',
-        where: const Column('phone_number').equals(phoneNumber),
-      ),
-      fromJson: (row) => (
-        id: row['id'] as String,
-        email: null,
-        phoneNumber: row['phone_number'] as String,
-        hashedPassword: row['password'] as String,
-        salt: row['salt'] as String,
-      ),
+  Future<List<User>> getUsersByPhoneNumber(String phoneNumber) async {
+    final result = await _connection.execute(
+      Sql.named('''
+        SELECT id, phone_number, password, salt, email
+        FROM users
+        WHERE phone_number = @phoneNumber
+      '''),
+      parameters: {
+        'phoneNumber': phoneNumber,
+      },
     );
+    return result
+        .map(
+          (row) => (
+            id: row[0]! as String,
+            email: null,
+            phoneNumber: row[1]! as String,
+            hashedPassword: row[2]! as String,
+            salt: row[3]! as String,
+          ),
+        )
+        .toList();
   }
 
   @override
@@ -213,24 +233,27 @@ class PostgresDataStorage extends DataStorage {
     required String channel,
     required String now,
   }) async {
-    final rows = await _database.mappedQuery(
-      Select(
-        [const Column('id'), const Column('otp')],
-        from: 'auth.otps',
-        where:
-            const Column('identifier').equals(identifier) &
-            const Column('channel').equals(channel) &
-            const Column('expires_at').greaterThan(now) &
-            const Not(Column('revoked')),
-      ),
-      fromJson: (row) => row['otp'] as String,
+    final result = await _connection.execute(
+      Sql.named('''
+        SELECT id, otp
+        FROM auth.otps
+        WHERE identifier = @identifier 
+          AND channel = @channel 
+          AND expires_at > @now 
+          AND NOT revoked
+      '''),
+      parameters: {
+        'identifier': identifier,
+        'channel': channel,
+        'now': now,
+      },
     );
-    if (rows.isEmpty) {
+    if (result.isEmpty) {
       return null;
     }
-    if (rows.length > 1) {
+    if (result.length > 1) {
       return null;
     }
-    return rows.first;
+    return result.first[1]! as String;
   }
 }
