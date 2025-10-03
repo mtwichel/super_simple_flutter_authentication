@@ -181,10 +181,10 @@ packages:
     dependency: "direct main"
     description:
       name: dart_frog
-      sha256: "569db68a710bcadf96d8addc8988d09a93c4a9521cb6467c2df5ee0ab939c8a4"
+      sha256: "0fc909d10ae79dd069e6a3a4769aeaa9839c93b7f6f1e71cfd37b276410875e7"
       url: "https://pub.dev"
     source: hosted
-    version: "1.2.0"
+    version: "1.2.4"
   dart_style:
     dependency: transitive
     description:
@@ -193,14 +193,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.0"
-  equatable:
-    dependency: "direct main"
-    description:
-      name: equatable
-      sha256: "567c64b3cb4cf82397aac55f4f0cbd3ca20d77c6c03bedbc4ceaddc08904aef7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.7"
   file:
     dependency: transitive
     description:
@@ -242,7 +234,7 @@ packages:
     source: hosted
     version: "2.3.2"
   hive_ce:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: hive_ce
       sha256: "708bb39050998707c5d422752159f91944d3c81ab42d80e1bd0ee37d8e130658"
@@ -258,13 +250,13 @@ packages:
     source: hosted
     version: "4.3.0"
   http:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: http
-      sha256: "2c11f3f94c687ee9bad77c171151672986360b2b001d109814ee7140b2cf261b"
+      sha256: bb2ce4590bc2667c96f318d68cac1b5a7987ec819351d32b1c987239a815e007
       url: "https://pub.dev"
     source: hosted
-    version: "1.4.0"
+    version: "1.5.0"
   http_methods:
     dependency: transitive
     description:
@@ -314,7 +306,7 @@ packages:
     source: hosted
     version: "0.6.7"
   json_annotation:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: json_annotation
       sha256: "1ce844379ca14835a50d2f019a3099f419082cfdd231cd86a142af94dd5c6bb1"
@@ -346,7 +338,7 @@ packages:
     source: hosted
     version: "0.12.17"
   meta:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: meta
       sha256: "23f08335362185a5ea2ad3a4e597f1375e78bce8a040df5c600c8d3552ef2394"
@@ -394,7 +386,7 @@ packages:
     source: hosted
     version: "1.9.1"
   pointycastle:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: pointycastle
       sha256: "92aa3841d083cc4b0f4709b5c74fd6409a3e6ba833ffc7dc6a8fee096366acf5"
@@ -410,7 +402,7 @@ packages:
     source: hosted
     version: "1.5.1"
   postgres:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: postgres
       sha256: "9aaa6f4872956adef653535a4e2133b167465c1a68c22b9bd0744ef1244e9393"
@@ -418,7 +410,7 @@ packages:
     source: hosted
     version: "3.5.6"
   postgres_builder:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: postgres_builder
       sha256: c04b4c5c683cd44ec6767dbc4d456a7b55165d346578416f6d38a2a60a960555
@@ -585,13 +577,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
+  super_simple_authentication_hive_data_storage:
+    dependency: "direct main"
+    description:
+      name: super_simple_authentication_hive_data_storage
+      sha256: "9bb1fd029bab70a9e6a867c07d8ab017aa9c10c0141144019eb1501482d804ec"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1-dev.1"
+  super_simple_authentication_postgres_data_storage:
+    dependency: "direct main"
+    description:
+      name: super_simple_authentication_postgres_data_storage
+      sha256: "48fa3adae07cea2d1b0894233732d91edc0eaf1b47db2ab50ab1879857401326"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1-dev.1"
   super_simple_authentication_toolkit:
     dependency: "direct main"
     description:
-      path: "../super_simple_authentication_toolkit"
-      relative: true
-    source: path
-    version: "0.0.1"
+      name: super_simple_authentication_toolkit
+      sha256: "163e5dc56fb30a99fb321567dc13681eb5a928495c47f6698f26d2c29e59a119"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1-dev.1"
   term_glyph:
     dependency: transitive
     description:
@@ -649,7 +658,7 @@ packages:
     source: hosted
     version: "0.3.0"
   uuid:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: uuid
       sha256: a5be9ef6618a7ac1e964353ef476418026db906c4facdedaa299b7a2e71690ff
