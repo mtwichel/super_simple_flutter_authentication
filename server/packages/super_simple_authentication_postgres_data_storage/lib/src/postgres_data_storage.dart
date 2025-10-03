@@ -1,4 +1,4 @@
-import 'package:postgres/postgres.dart';
+import 'package:super_simple_authentication_postgres_data_storage/super_simple_authentication_postgres_data_storage.dart';
 import 'package:super_simple_authentication_toolkit/super_simple_authentication_toolkit.dart';
 
 /// {@template postgres_data_storage}
@@ -18,11 +18,16 @@ class PostgresDataStorage extends DataStorage {
   Future<void> initialize({
     required Endpoint endpoint,
     ConnectionSettings? settings,
+    bool shouldInitializeDatabase = false,
+    SchemaDefinition schemaDefinition = const SchemaDefinition(),
   }) async {
     _connection = await Connection.open(
       endpoint,
       settings: settings,
     );
+    if (shouldInitializeDatabase) {
+      await initializeDatabase(_connection);
+    }
   }
 
   @override
