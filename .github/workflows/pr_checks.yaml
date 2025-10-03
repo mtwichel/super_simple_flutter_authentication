@@ -44,8 +44,6 @@ jobs:
           tags: ${{ steps.pr-tag.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          provenance: false # Disable provenance for better compatibility
-          sbom: true # Generate Software Bill of Materials
           load: true # Load image locally for scanning
 
       - name: Run Trivy vulnerability scanner
