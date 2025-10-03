@@ -37,8 +37,8 @@ jobs:
       - name: Build Docker image for scanning
         uses: docker/build-push-action@v5
         with:
-          context: ./packages/super_simple_authentication_server
-          file: ./packages/super_simple_authentication_server/Dockerfile
+          context: ./server
+          file: ./server/Dockerfile
           platforms: linux/amd64
           push: false
           tags: ${{ steps.pr-tag.outputs.tag }}
@@ -90,8 +90,8 @@ jobs:
       - name: Test Docker build
         uses: docker/build-push-action@v5
         with:
-          context: ./packages/super_simple_authentication_server
-          file: ./packages/super_simple_authentication_server/Dockerfile
+          context: ./server
+          file: ./server/Dockerfile
           platforms: linux/amd64
           push: false
           tags: pr-test:${{ github.event.number }}
