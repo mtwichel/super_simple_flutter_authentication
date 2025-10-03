@@ -97,10 +97,10 @@ jobs:
           cache-to: type=gha,mode=max
           load: true
 
-      - name: Test image runs
+      - name: Verify image exists
         run: |
-          # Test that the image can start (with a timeout)
-          timeout 10s docker run --rm pr-test:${{ github.event.number }} || true
+          # Verify the image was built successfully
+          docker images | grep "pr-test:${{ github.event.number }}"
           echo "Build test completed successfully"
 
   pr-summary:
