@@ -98,7 +98,8 @@ class SuperSimpleAuthentication {
     }
     final streamedResponse = await _client.send(request);
     final response = await http.Response.fromStream(streamedResponse);
-    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    final json = Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    return json;
   }
 
   String? _accessToken;

@@ -1,8 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:super_simple_authentication_toolkit/src/data_storage/data_storage.dart';
-import 'package:super_simple_authentication_toolkit/src/util/util.dart';
+import 'package:super_simple_authentication_toolkit/super_simple_authentication_toolkit.dart';
 
 /// A handler for refreshing a token.
 Handler refreshTokenHandler() {
@@ -19,7 +18,9 @@ Handler refreshTokenHandler() {
     );
 
     if (revoked) {
-      return Response.json(body: {'error': 'Refresh token revoked'});
+      return Response.json(
+        body: SignInResponse(error: 'Refresh token revoked'),
+      );
     }
 
     await dataStorage.revokeRefreshToken(refreshToken: refreshToken);
@@ -44,6 +45,11 @@ Handler refreshTokenHandler() {
       parentToken: refreshToken,
     );
 
-    return Response.json(body: {'token': jwt, 'refreshToken': newRefreshToken});
+    return Response.json(
+      body: SignInResponse(
+        token: jwt,
+        refreshToken: newRefreshToken,
+      ),
+    );
   };
 }

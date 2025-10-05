@@ -18,11 +18,15 @@ Handler signInWithEmailPasswordHandler() {
     final result = await dataStorage.getUsersByEmail(email);
 
     if (result.isEmpty) {
-      return Response.json(body: {'error': 'User not found'});
+      return Response.json(
+        body: SignInResponse(error: 'User not found'),
+      );
     }
 
     if (result.isEmpty) {
-      return Response.json(body: {'error': 'User not found'});
+      return Response.json(
+        body: SignInResponse(error: 'User not found'),
+      );
     }
 
     final userId = result.first.id;
@@ -31,7 +35,9 @@ Handler signInWithEmailPasswordHandler() {
     final salt = result.first.salt;
 
     if (hashedPassword == null || salt == null) {
-      return Response.json(body: {'error': 'Invalid credentials'});
+      return Response.json(
+        body: SignInResponse(error: 'Invalid credentials'),
+      );
     }
 
     final storedPassword = base64.decode(hashedPassword);
@@ -43,12 +49,16 @@ Handler signInWithEmailPasswordHandler() {
     );
 
     if (computedHash.length != storedPassword.length) {
-      return Response.json(body: {'error': 'Invalid credentials'});
+      return Response.json(
+        body: SignInResponse(error: 'Invalid credentials'),
+      );
     }
 
     for (var i = 0; i < computedHash.length; i++) {
       if (computedHash[i] != storedPassword[i]) {
-        return Response.json(body: {'error': 'Invalid credentials'});
+        return Response.json(
+          body: SignInResponse(error: 'Invalid credentials'),
+        );
       }
     }
     final jwt = await createJwt(
@@ -66,6 +76,11 @@ Handler signInWithEmailPasswordHandler() {
       userId: userId,
     );
 
-    return Response.json(body: {'token': jwt, 'refreshToken': refreshToken});
+    return Response.json(
+      body: SignInResponse(
+        token: jwt,
+        refreshToken: refreshToken,
+      ),
+    );
   };
 }

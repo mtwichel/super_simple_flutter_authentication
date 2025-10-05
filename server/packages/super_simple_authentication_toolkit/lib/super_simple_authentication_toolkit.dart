@@ -7,4 +7,5 @@ export 'src/data_storage/in_memory_data_storage.dart';
 export 'src/handlers/handlers.dart';
 export 'src/integrations/integrations.dart';
 export 'src/middleware/middleware.dart';
+export 'src/model/model.dart';
 export 'src/util/util.dart';

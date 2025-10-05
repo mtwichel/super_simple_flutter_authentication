@@ -82,6 +82,7 @@ node_modules/
 .pub-cache/
 .pub/
 build/
+pubspec_overrides.yaml
 
 # Web related
 lib/generated_plugin_registrant.dart
@@ -96,4 +97,5 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
 

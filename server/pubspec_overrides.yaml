@@ -1,0 +1,7 @@
+dependency_overrides:
+  super_simple_authentication_toolkit:
+    path: packages/super_simple_authentication_toolkit
+  super_simple_authentication_postgres_data_storage:
+    path: packages/super_simple_authentication_postgres_data_storage
+  super_simple_authentication_hive_data_storage:
+    path: packages/super_simple_authentication_hive_data_storage

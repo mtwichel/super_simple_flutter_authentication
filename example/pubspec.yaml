@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   super_simple_authentication_flutter:
-    path: ../../super_simple_authentication_flutter
+    path: ../packages/super_simple_authentication_flutter
 
 dev_dependencies:
   flutter_test:
