@@ -28,6 +28,11 @@ Handler signInAnonymouslyHandler() {
       userId: userId,
     );
 
-    return Response.json(body: {'token': jwt, 'refreshToken': refreshToken});
+    return Response.json(
+      body: SignInResponse(
+        token: jwt,
+        refreshToken: refreshToken,
+      ),
+    );
   };
 }

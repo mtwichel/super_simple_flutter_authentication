@@ -39,23 +39,14 @@ Future<void> init(InternetAddress ip, int port) async {
       password: password,
     );
 
-    final database = DirectPostgresBuilder(
-      debug: true,
-      logger: (sql) {
-        // ignore: avoid_print
-        print(sql);
-      },
-    );
-
-    await database.initialize(
-      endpoint: endpoint,
-      settings: const ConnectionSettings(sslMode: SslMode.disable),
-    );
+    final shouldInitializeDatabaseSchema =
+        Platform.environment['SHOULD_INITIALIZE_DATABASE_SCHEMA'] == 'true';
 
     final storage = PostgresDataStorage();
     await storage.initialize(
       endpoint: endpoint,
       settings: const ConnectionSettings(sslMode: SslMode.disable),
+      shouldInitializeDatabase: shouldInitializeDatabaseSchema,
     );
     dataStorage = storage;
   }

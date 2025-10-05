@@ -71,7 +71,7 @@ Handler sendOtpHandler({
     }
 
     return Response.json(
-      body: {'expiresAt': expiresAt, 'expiresIn': otpExpiration},
+      body: {'expiresAt': expiresAt, 'expiresIn': otpExpiration, 'error': null},
     );
   };
 }

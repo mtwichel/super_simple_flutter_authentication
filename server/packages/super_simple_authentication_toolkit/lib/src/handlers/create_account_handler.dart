@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
-import 'package:super_simple_authentication_toolkit/src/data_storage/data_storage.dart';
-import 'package:super_simple_authentication_toolkit/src/util/util.dart';
+import 'package:super_simple_authentication_toolkit/super_simple_authentication_toolkit.dart';
 
 /// A handler for creating a new account.
 Handler createAccountHandler() {
@@ -40,6 +39,11 @@ Handler createAccountHandler() {
       userId: userId,
     );
 
-    return Response.json(body: {'token': jwt, 'refreshToken': refreshToken});
+    return Response.json(
+      body: SignInResponse(
+        token: jwt,
+        refreshToken: refreshToken,
+      ),
+    );
   };
 }
