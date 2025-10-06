@@ -33,8 +33,8 @@ class SignInWithApple {
         throw Exception('Invalid JWT header or payload');
       }
       final header = (jsonDecode(decodedHeader) as Map).cast<String, dynamic>();
-      final payload =
-          (jsonDecode(decodedPayload) as Map).cast<String, dynamic>();
+      final payload = (jsonDecode(decodedPayload) as Map)
+          .cast<String, dynamic>();
 
       // Get Apple's public keys
       final response = await http.get(
