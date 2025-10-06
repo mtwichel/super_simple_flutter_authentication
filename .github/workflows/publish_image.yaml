@@ -143,10 +143,10 @@ jobs:
         with:
           platforms: linux/amd64
 
-      - name: Set image tag for PR scans
-        id: pr-tag
+      - name: Set image tag for security scans
+        id: scan-tag
         run: |
-          echo "tag=temp-pr-image:${{ github.event.number }}" >> $GITHUB_OUTPUT
+          echo "tag=temp-scan-image:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: Build Docker image for scanning
         uses: docker/build-push-action@v5
@@ -155,7 +155,7 @@ jobs:
           file: ./server/Dockerfile
           platforms: linux/amd64
           push: false
-          tags: ${{ steps.pr-tag.outputs.tag }}
+          tags: ${{ steps.scan-tag.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true # Load image locally for scanning
@@ -163,7 +163,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ steps.pr-tag.outputs.tag }}
+          image-ref: ${{ steps.scan-tag.outputs.tag }}
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
