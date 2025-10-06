@@ -118,3 +118,7 @@ jobs:
             echo "The important thing is that the build step completed without errors"
           fi
           echo "Build test completed successfully"
+
+  verify-semantic-pull-request:
+    name: Verify Pull Request has Semantic Name
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/semantic_pull_request.yml@v1
