@@ -67,11 +67,10 @@ abstract class DataStorage {
 }
 
 /// A user.
-typedef User =
-    ({
-      String id,
-      String? email,
-      String? phoneNumber,
-      String? hashedPassword,
-      String? salt,
-    });
+typedef User = ({
+  String id,
+  String? email,
+  String? phoneNumber,
+  String? hashedPassword,
+  String? salt,
+});

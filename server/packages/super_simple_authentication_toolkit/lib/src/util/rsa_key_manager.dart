@@ -27,13 +27,13 @@ class RsaKeyManager {
       final seed = List<int>.generate(32, (i) => random.nextInt(256));
       secureRandom.seed(KeyParameter(Uint8List.fromList(seed)));
 
-      final keyGen =
-          RSAKeyGenerator()..init(
-            ParametersWithRandom(
-              RSAKeyGeneratorParameters(BigInt.from(65537), keySize, 64),
-              secureRandom,
-            ),
-          );
+      final keyGen = RSAKeyGenerator()
+        ..init(
+          ParametersWithRandom(
+            RSAKeyGeneratorParameters(BigInt.from(65537), keySize, 64),
+            secureRandom,
+          ),
+        );
 
       final keyPair = keyGen.generateKeyPair();
       final privateKey = keyPair.privateKey;
@@ -121,8 +121,9 @@ class RsaKeyManager {
     // Use a simple but robust hash calculation that avoids range errors
     // Take the first 8 bytes and create a simple hash
     final keyIdBytes = publicKeyBytes.take(8).toList();
-    final keyId =
-        keyIdBytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+    final keyId = keyIdBytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
 
     return keyId;
   }
