@@ -119,34 +119,6 @@ jobs:
           fi
           echo "Build test completed successfully"
 
-  pr-summary:
-    name: PR Summary
-    runs-on: ubuntu-latest
-    needs: [security-scan, build-test]
-    if: always()
-
-    steps:
-      - name: Create PR Summary
-        run: |
-          echo "## 🔍 Pull Request Checks Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Security scan status
-          if [ "${{ needs.security-scan.result }}" == "success" ]; then
-            echo "✅ **Security Scan**: Passed" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ **Security Scan**: Failed" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Build test status
-          if [ "${{ needs.build-test.result }}" == "success" ]; then
-            echo "✅ **Build Test**: Passed" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ **Build Test**: Failed" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "- Review any failed checks above" >> $GITHUB_STEP_SUMMARY
-          echo "- Security scan results are available in the Security tab" >> $GITHUB_STEP_SUMMARY
-          echo "- Once merged, the Docker image will be automatically built and published" >> $GITHUB_STEP_SUMMARY
+  verify-semantic-pull-request:
+    name: Verify Pull Request has Semantic Name
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/semantic_pull_request.yml@v1
