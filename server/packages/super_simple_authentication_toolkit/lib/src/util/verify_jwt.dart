@@ -141,8 +141,9 @@ Future<RSAPublicKey> _fetchPublicKeyFromJwks(
 
   final jwks = json.decode(response.body) as Map<String, dynamic>;
   final rawKeys = jwks['keys'] as List?;
-  final keys =
-      rawKeys == null ? null : List<Map<String, dynamic>>.from(rawKeys);
+  final keys = rawKeys == null
+      ? null
+      : List<Map<String, dynamic>>.from(rawKeys);
 
   if (keys == null) {
     throw Exception('No keys found in JWKS');
