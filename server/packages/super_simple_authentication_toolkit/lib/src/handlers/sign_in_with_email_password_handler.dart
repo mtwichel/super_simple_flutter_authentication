@@ -19,13 +19,13 @@ Handler signInWithEmailPasswordHandler() {
 
     if (result.isEmpty) {
       return Response.json(
-        body: SignInResponse(error: 'User not found'),
+        body: SignInResponse(error: SignInError.invalidCredentials),
       );
     }
 
     if (result.isEmpty) {
       return Response.json(
-        body: SignInResponse(error: 'User not found'),
+        body: SignInResponse(error: SignInError.invalidCredentials),
       );
     }
 
@@ -36,7 +36,7 @@ Handler signInWithEmailPasswordHandler() {
 
     if (hashedPassword == null || salt == null) {
       return Response.json(
-        body: SignInResponse(error: 'Invalid credentials'),
+        body: SignInResponse(error: SignInError.invalidCredentials),
       );
     }
 
@@ -50,14 +50,14 @@ Handler signInWithEmailPasswordHandler() {
 
     if (computedHash.length != storedPassword.length) {
       return Response.json(
-        body: SignInResponse(error: 'Invalid credentials'),
+        body: SignInResponse(error: SignInError.invalidCredentials),
       );
     }
 
     for (var i = 0; i < computedHash.length; i++) {
       if (computedHash[i] != storedPassword[i]) {
         return Response.json(
-          body: SignInResponse(error: 'Invalid credentials'),
+          body: SignInResponse(error: SignInError.invalidCredentials),
         );
       }
     }

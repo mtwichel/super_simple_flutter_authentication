@@ -1,3 +1,5 @@
+import 'package:super_simple_authentication_toolkit/super_simple_authentication_toolkit.dart';
+
 /// {@template sign_in_response}
 /// A response for signing in.
 /// {@endtemplate}
@@ -16,12 +18,12 @@ class SignInResponse {
   final String? refreshToken;
 
   /// The error.
-  final String? error;
+  final SignInError? error;
 
   /// Converts the response to a JSON map.
   Map<String, dynamic> toJson() => {
     'token': token,
     'refreshToken': refreshToken,
-    'error': error,
+    'error': error?.name,
   };
 }

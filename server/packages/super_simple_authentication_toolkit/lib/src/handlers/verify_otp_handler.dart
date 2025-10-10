@@ -34,7 +34,7 @@ Handler verifyOtpHandler({
     final hashedRequestOtp = await hashOtp(otp);
 
     if (hashedRequestOtp != expectedOtp) {
-      return Response.json(body: SignInResponse(error: 'OTP invalid'));
+      return Response.json(body: SignInResponse(error: SignInError.otpInvalid));
     }
 
     await dataStorage.revokeOtpsFor(identifier: identifier, channel: type);
@@ -44,7 +44,7 @@ Handler verifyOtpHandler({
         ? await dataStorage.getUsersByEmail(identifier)
         : await dataStorage.getUsersByPhoneNumber(identifier);
     if (users.length > 1) {
-      return Response.json(body: SignInResponse(error: 'Unknown error'));
+      return Response.json(body: SignInResponse(error: SignInError.unknown));
     }
     final isNewUser = users.isEmpty;
     if (isNewUser) {

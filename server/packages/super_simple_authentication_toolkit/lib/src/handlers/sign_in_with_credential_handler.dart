@@ -18,7 +18,7 @@ Handler signInWithCredentialHandler() {
     if (parts.length != 3) {
       return Response.json(
         statusCode: HttpStatus.unauthorized,
-        body: SignInResponse(error: 'Invalid 3rd party credential'),
+        body: SignInResponse(error: SignInError.invalid3rdPartyCredential),
       );
     }
 
@@ -30,9 +30,10 @@ Handler signInWithCredentialHandler() {
         try {
           final clientId = environment['GOOGLE_CLIENT_ID'];
           if (clientId == null || clientId.isEmpty) {
+            stderr.writeln('Google client ID is not set');
             return Response.json(
               statusCode: HttpStatus.internalServerError,
-              body: SignInResponse(error: 'Server error'),
+              body: SignInResponse(error: SignInError.unknown),
             );
           }
           final googleVerifier = SignInWithGoogle(clientId: clientId);
@@ -40,14 +41,16 @@ Handler signInWithCredentialHandler() {
           if (extractedEmail.isEmpty) {
             return Response.json(
               statusCode: HttpStatus.unauthorized,
-              body: SignInResponse(error: 'Invalid 3rd party credential'),
+              body: SignInResponse(
+                error: SignInError.invalid3rdPartyCredential,
+              ),
             );
           }
           email = extractedEmail;
         } catch (_) {
           return Response.json(
             statusCode: HttpStatus.unauthorized,
-            body: SignInResponse(error: 'Invalid 3rd party credential'),
+            body: SignInResponse(error: SignInError.invalid3rdPartyCredential),
           );
         }
       case 'apple':
@@ -56,9 +59,10 @@ Handler signInWithCredentialHandler() {
           final serviceId = environment['APPLE_SERVICE_ID'];
 
           if (bundleId == null || bundleId.isEmpty) {
+            stderr.writeln('Apple bundle ID is not set');
             return Response.json(
               statusCode: HttpStatus.internalServerError,
-              body: SignInResponse(error: 'Server error'),
+              body: SignInResponse(error: SignInError.unknown),
             );
           }
 
@@ -70,20 +74,22 @@ Handler signInWithCredentialHandler() {
           if (extractedEmail.isEmpty) {
             return Response.json(
               statusCode: HttpStatus.unauthorized,
-              body: SignInResponse(error: 'Invalid 3rd party credential'),
+              body: SignInResponse(
+                error: SignInError.invalid3rdPartyCredential,
+              ),
             );
           }
           email = extractedEmail;
         } catch (_) {
           return Response.json(
             statusCode: HttpStatus.unauthorized,
-            body: SignInResponse(error: 'Invalid 3rd party credential'),
+            body: SignInResponse(error: SignInError.invalid3rdPartyCredential),
           );
         }
       default:
         return Response.json(
           statusCode: HttpStatus.unauthorized,
-          body: SignInResponse(error: 'Invalid 3rd party credential'),
+          body: SignInResponse(error: SignInError.invalid3rdPartyCredential),
         );
     }
 
@@ -91,7 +97,7 @@ Handler signInWithCredentialHandler() {
     final String userId;
     final users = await dataStorage.getUsersByEmail(email);
     if (users.length > 1) {
-      return Response.json(body: SignInResponse(error: 'Unknown error'));
+      return Response.json(body: SignInResponse(error: SignInError.unknown));
     }
     final isNewUser = users.isEmpty;
     if (users.isEmpty) {
