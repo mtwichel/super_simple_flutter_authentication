@@ -9,5 +9,6 @@ Handler middleware(Handler handler) {
   return handler
       .use(requestLogger())
       .use(provider((_) => dataStorage))
+      .use(provider((_) => logger))
       .use(provider<Environment>((_) => Platform.environment));
 }

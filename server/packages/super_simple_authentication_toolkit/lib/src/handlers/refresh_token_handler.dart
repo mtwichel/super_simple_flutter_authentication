@@ -19,7 +19,7 @@ Handler refreshTokenHandler() {
 
     if (revoked) {
       return Response.json(
-        body: SignInResponse(error: 'Refresh token revoked'),
+        body: SignInResponse(error: SignInError.refreshTokenRevoked),
       );
     }
 
