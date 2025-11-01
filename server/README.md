@@ -521,6 +521,8 @@ See the complete environment variable reference in the [Environment Variables](#
 - `TWILIO_*` or `TEXTBELT_API_KEY` - SMS OTP support
 - `GOOGLE_CLIENT_ID` - Google sign-in support
 - `APPLE_BUNDLE_ID` - Apple sign-in support
+- `API_KEY` - API key for authentication
+- `ALLOWED_ORIGIN` - Allowed origin for CORS
 
 ## Monitoring and Logging
 
