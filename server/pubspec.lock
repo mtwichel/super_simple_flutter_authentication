@@ -181,10 +181,10 @@ packages:
     dependency: "direct main"
     description:
       name: dart_frog
-      sha256: "84b8f82413f622dfdcfba6982522f8752ece09b49fea9a35f8794a0b2bc357e4"
+      sha256: "0fc909d10ae79dd069e6a3a4769aeaa9839c93b7f6f1e71cfd37b276410875e7"
       url: "https://pub.dev"
     source: hosted
-    version: "1.2.3"
+    version: "1.2.4"
   dart_style:
     dependency: transitive
     description:
@@ -580,23 +580,26 @@ packages:
   super_simple_authentication_hive_data_storage:
     dependency: "direct main"
     description:
-      path: "packages/super_simple_authentication_hive_data_storage"
-      relative: true
-    source: path
+      name: super_simple_authentication_hive_data_storage
+      sha256: "9bb1fd029bab70a9e6a867c07d8ab017aa9c10c0141144019eb1501482d804ec"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.0.1-dev.1"
   super_simple_authentication_postgres_data_storage:
     dependency: "direct main"
     description:
-      path: "packages/super_simple_authentication_postgres_data_storage"
-      relative: true
-    source: path
+      name: super_simple_authentication_postgres_data_storage
+      sha256: "8e203468fb7ed77d5bacbb8cc607c6462b6d4d6756b12c5e74ba5cfa48aa2e66"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.0.1-dev.2"
   super_simple_authentication_toolkit:
     dependency: "direct main"
     description:
-      path: "packages/super_simple_authentication_toolkit"
-      relative: true
-    source: path
+      name: super_simple_authentication_toolkit
+      sha256: "841eb9becb20a5df1dadc0d96e7e4dbec8ac8db9b11b005b2a35d59455a085b0"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.0.1-dev.3"
   term_glyph:
     dependency: transitive
