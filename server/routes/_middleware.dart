@@ -11,5 +11,20 @@ Handler middleware(Handler handler) {
       .use(rateLimitMiddleware())
       .use(provider((_) => dataStorage))
       .use(provider((_) => logger))
+      .use(apiKeyMiddleware(apiKey: Platform.environment['API_KEY']))
+      .use(
+        corsMiddleware(
+          allowedOrigin: Platform.environment['ALLOWED_ORIGIN'],
+          allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+          allowedHeaders: [
+            'Content-Type',
+            'x-api-key',
+            'x-forwarded-for',
+            'x-real-ip',
+            'cf-connecting-ip',
+            'host',
+          ],
+        ),
+      )
       .use(provider<Environment>((_) => Platform.environment));
 }

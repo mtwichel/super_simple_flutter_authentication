@@ -23,43 +23,48 @@ RUN dart pub global run dart_frog_cli:dart_frog build
 # Compile the application to native executable
 RUN dart compile exe build/bin/server.dart -o build/bin/server
 
-# Stage 2: Create minimal runtime image
-FROM debian:bookworm-slim AS runtime
+# Create minimal passwd/group files for non-root user support in scratch image
+# Using numeric UID/GID 65534 (nobody/nogroup) for minimal scratch image
+RUN mkdir -p /app/etc && \
+    echo "nobody:x:65534:65534:Nobody:/:/sbin/nologin" > /app/etc/passwd && \
+    echo "nogroup:x:65534:" > /app/etc/group
 
-# Install only required runtime dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+# Stage 2: Create minimal runtime image from scratch
+FROM scratch
 
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Copy minimal runtime dependencies from Dart SDK
+# This includes the necessary C libraries that the compiled binary needs
+COPY --from=build /runtime/ /
 
-# Set working directory
-WORKDIR /app
+# Copy CA certificates for HTTPS requests (critical for auth server)
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# Copy minimal passwd/group files for non-root user support
+COPY --from=build /app/etc/passwd /etc/passwd
+COPY --from=build /app/etc/group /etc/group
 
 # Copy the compiled binary
 COPY --from=build /app/build/bin/server /app/bin/server
 
-# Change ownership to non-root user
-RUN chown -R appuser:appuser /app
+# Use numeric UID/GID for non-root user (nobody = 65534)
+# This works even in scratch without useradd
+USER 65534:65534
 
-# Switch to non-root user
-USER appuser
-
-# Expose port (adjust if your app uses a different port)
+# Expose port
 EXPOSE 8080
 
-# Add health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/ || exit 1
+# Note: In scratch images, HEALTHCHECK requires an executable.
+# For production, use external health checks from your orchestrator:
+# - Docker Compose: Use httpGet with a health endpoint
+# - Kubernetes: Use livenessProbe with httpGet or tcpSocket
+# - Docker Swarm: Use --health-cmd at service level
 
 # Add labels for better container management
 LABEL org.opencontainers.image.title="Super Simple Authentication Server"
 LABEL org.opencontainers.image.description="Authentication server built with Dart Frog"
 LABEL org.opencontainers.image.vendor="Marcus Twichel"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.security="Minimal attack surface with scratch base image and non-root user"
 
 # Start the server
 CMD ["/app/bin/server"]

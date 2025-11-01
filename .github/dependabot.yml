@@ -1,0 +1,36 @@
+version: 2
+updates:
+  # Main server package
+  - package-ecosystem: "pub"
+    directory: "/server"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # Flutter package
+  - package-ecosystem: "pub"
+    directory: "/packages/super_simple_authentication_flutter"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # Server package: Toolkit
+  - package-ecosystem: "pub"
+    directory: "/server/packages/super_simple_authentication_toolkit"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # Server package: Postgres data storage
+  - package-ecosystem: "pub"
+    directory: "/server/packages/super_simple_authentication_postgres_data_storage"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # Server package: Hive data storage
+  - package-ecosystem: "pub"
+    directory: "/server/packages/super_simple_authentication_hive_data_storage"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
