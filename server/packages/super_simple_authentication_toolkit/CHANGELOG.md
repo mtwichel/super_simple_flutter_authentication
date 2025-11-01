@@ -1,3 +1,8 @@
+## 0.0.1-dev.3
+
+- Add CORS middleware
+- Fixed sign in error enum
+
 ## 0.0.1-dev.2
 
 - Standardize sign in response format

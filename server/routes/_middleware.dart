@@ -11,5 +11,6 @@ Handler middleware(Handler handler) {
       .use(rateLimitMiddleware())
       .use(provider((_) => dataStorage))
       .use(provider((_) => logger))
-      .use(provider<Environment>((_) => Platform.environment));
+      .use(provider<Environment>((_) => Platform.environment))
+      .use(corsMiddleware());
 }

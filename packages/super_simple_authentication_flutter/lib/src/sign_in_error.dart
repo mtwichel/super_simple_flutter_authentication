@@ -3,9 +3,6 @@ enum SignInError {
   /// The credentials provided were invalid.
   invalidCredentials,
 
-  /// The user was not found.
-  userNotFound,
-
   /// The OTP provided was invalid.
   otpInvalid,
 
@@ -14,4 +11,7 @@ enum SignInError {
 
   /// The 3rd party credential provided was invalid.
   invalid3rdPartyCredential,
+
+  /// The refresh token was revoked.
+  refreshTokenRevoked,
 }

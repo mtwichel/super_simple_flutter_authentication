@@ -1,6 +1,6 @@
 name: super_simple_authentication_flutter
 description: A Flutter client for Super Simple Authentication.
-version: 0.0.1-dev.1
+version: 0.0.1-dev.2
 repository: https://github.com/mtwichel/super_simple_flutter_authentication/tree/main/packages/super_simple_authentication_flutter
 
 environment:
