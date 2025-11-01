@@ -23,6 +23,12 @@ RUN dart pub global run dart_frog_cli:dart_frog build
 # Compile the application to native executable
 RUN dart compile exe build/bin/server.dart -o build/bin/server
 
+# Create minimal passwd/group files for non-root user support in scratch image
+# Using numeric UID/GID 65534 (nobody/nogroup) for minimal scratch image
+RUN mkdir -p /app/etc && \
+    echo "nobody:x:65534:65534:Nobody:/:/sbin/nologin" > /app/etc/passwd && \
+    echo "nogroup:x:65534:" > /app/etc/group
+
 # Stage 2: Create minimal runtime image from scratch
 FROM scratch
 
@@ -33,10 +39,9 @@ COPY --from=build /runtime/ /
 # Copy CA certificates for HTTPS requests (critical for auth server)
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-# Copy passwd/group files for non-root user support
-# The Dart runtime includes these in /runtime/
-COPY --from=build /runtime/etc/passwd /etc/passwd
-COPY --from=build /runtime/etc/group /etc/group
+# Copy minimal passwd/group files for non-root user support
+COPY --from=build /app/etc/passwd /etc/passwd
+COPY --from=build /app/etc/group /etc/group
 
 # Copy the compiled binary
 COPY --from=build /app/build/bin/server /app/bin/server

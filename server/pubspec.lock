@@ -597,7 +597,7 @@ packages:
       path: "packages/super_simple_authentication_toolkit"
       relative: true
     source: path
-    version: "0.0.1-dev.2"
+    version: "0.0.1-dev.3"
   term_glyph:
     dependency: transitive
     description:
