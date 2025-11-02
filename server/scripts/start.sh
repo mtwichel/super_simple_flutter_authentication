@@ -14,4 +14,4 @@ fi
 
 # Run dart_frog dev
 echo "Starting dart_frog dev..."
-dart_frog dev
+dart_frog dev -d 8183 -p 8083 
