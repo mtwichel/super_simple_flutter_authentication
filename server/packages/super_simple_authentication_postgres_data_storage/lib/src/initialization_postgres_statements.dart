@@ -58,6 +58,17 @@ Future<void> initializeDatabase(Connection connection) async {
     )
   ''');
 
+  // Create password reset tokens table
+  await connection.execute('''
+    CREATE TABLE IF NOT EXISTS auth.password_reset_tokens (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token TEXT NOT NULL UNIQUE,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+    )
+  ''');
+
   // Create indexes for better performance
   await connection.execute(
     'CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)',
@@ -73,5 +84,13 @@ Future<void> initializeDatabase(Connection connection) async {
 
   await connection.execute(
     '''CREATE INDEX IF NOT EXISTS idx_otps_identifier_channel ON auth.otps(identifier, channel)''',
+  );
+
+  await connection.execute(
+    '''CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON auth.password_reset_tokens(token)''',
+  );
+
+  await connection.execute(
+    '''CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON auth.password_reset_tokens(user_id)''',
   );
 }

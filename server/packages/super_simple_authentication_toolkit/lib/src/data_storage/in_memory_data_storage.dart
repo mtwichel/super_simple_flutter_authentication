@@ -159,4 +159,52 @@ class InMemoryDataStorage implements DataStorage {
     }
     _data[key] = {...existingSession, 'refreshedAt': refreshedAt};
   }
+
+  @override
+  Future<void> createPasswordResetToken({
+    required String userId,
+    required String hashedToken,
+    required String expiresAt,
+  }) async {
+    _data['passwordResetToken:$hashedToken'] = {
+      'userId': userId,
+      'expiresAt': expiresAt,
+    };
+  }
+
+  @override
+  Future<({String? userId, bool expired})> getPasswordResetToken({
+    required String token,
+    required String now,
+  }) async {
+    final key = 'passwordResetToken:$token';
+    final tokenData = _data[key];
+    if (tokenData == null) {
+      return (userId: null, expired: false);
+    }
+    final expiresAt = tokenData['expiresAt'] as String?;
+    if (expiresAt == null) {
+      return (userId: null, expired: false);
+    }
+    if (DateTime.parse(expiresAt).isBefore(DateTime.parse(now))) {
+      _data[key] = null;
+      return (userId: null, expired: true);
+    }
+    return (userId: tokenData['userId'] as String, expired: false);
+  }
+
+  @override
+  Future<void> revokePasswordResetTokens({required String userId}) async {
+    // Find all password reset tokens for this user and remove them
+    final keysToRemove = <String>[];
+    for (final entry in _data.entries) {
+      if (entry.key.startsWith('passwordResetToken:') &&
+          entry.value?['userId'] == userId) {
+        keysToRemove.add(entry.key);
+      }
+    }
+    for (final key in keysToRemove) {
+      _data[key] = null;
+    }
+  }
 }

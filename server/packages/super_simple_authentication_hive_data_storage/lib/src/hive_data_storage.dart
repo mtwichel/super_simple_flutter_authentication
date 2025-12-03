@@ -207,4 +207,53 @@ class HiveDataStorage implements DataStorage {
       'refreshedAt': refreshedAt,
     });
   }
+
+  @override
+  Future<void> createPasswordResetToken({
+    required String userId,
+    required String hashedToken,
+    required String expiresAt,
+  }) {
+    return _db.put('passwordResetToken:$hashedToken', {
+      'userId': userId,
+      'expiresAt': expiresAt,
+    });
+  }
+
+  @override
+  Future<({String? userId, bool expired})> getPasswordResetToken({
+    required String token,
+    required String now,
+  }) async {
+    final tokenData = _db.get('passwordResetToken:$token');
+    if (tokenData == null) {
+      return (userId: null, expired: false);
+    }
+    final expiresAt = tokenData['expiresAt'] as String?;
+    if (expiresAt == null) {
+      return (userId: null, expired: false);
+    }
+    if (DateTime.parse(expiresAt).isBefore(DateTime.parse(now))) {
+      await _db.delete('passwordResetToken:$token');
+      return (userId: null, expired: true);
+    }
+    return (userId: tokenData['userId'] as String, expired: false);
+  }
+
+  @override
+  Future<void> revokePasswordResetTokens({required String userId}) async {
+    // Find all password reset tokens for this user and remove them
+    final keysToRemove = <String>[];
+    for (final key in _db.keys) {
+      if (key.toString().startsWith('passwordResetToken:')) {
+        final tokenData = _db.get(key);
+        if (tokenData?['userId'] == userId) {
+          keysToRemove.add(key.toString());
+        }
+      }
+    }
+    for (final key in keysToRemove) {
+      await _db.delete(key);
+    }
+  }
 }
