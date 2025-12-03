@@ -177,7 +177,9 @@ class InMemoryDataStorage implements DataStorage {
     required String token,
     required String now,
   }) async {
-    final key = 'passwordResetToken:$token';
+    // Hash the token before lookup since we store hashed tokens
+    final hashedToken = await hashPasswordResetToken(token);
+    final key = 'passwordResetToken:$hashedToken';
     final tokenData = _data[key];
     if (tokenData == null) {
       return (userId: null, expired: false);

@@ -225,7 +225,9 @@ class HiveDataStorage implements DataStorage {
     required String token,
     required String now,
   }) async {
-    final tokenData = _db.get('passwordResetToken:$token');
+    // Hash the token before lookup since we store hashed tokens
+    final hashedToken = await hashPasswordResetToken(token);
+    final tokenData = _db.get('passwordResetToken:$hashedToken');
     if (tokenData == null) {
       return (userId: null, expired: false);
     }
@@ -234,7 +236,7 @@ class HiveDataStorage implements DataStorage {
       return (userId: null, expired: false);
     }
     if (DateTime.parse(expiresAt).isBefore(DateTime.parse(now))) {
-      await _db.delete('passwordResetToken:$token');
+      await _db.delete('passwordResetToken:$hashedToken');
       return (userId: null, expired: true);
     }
     return (userId: tokenData['userId'] as String, expired: false);

@@ -286,14 +286,16 @@ class PostgresDataStorage extends DataStorage {
     required String token,
     required String now,
   }) async {
+    // Hash the token before lookup since we store hashed tokens
+    final hashedToken = await hashPasswordResetToken(token);
     final result = await _connection.execute(
       Sql.named('''
         SELECT user_id, expires_at
         FROM auth.password_reset_tokens
-        WHERE token = @token
+        WHERE token = @hashedToken
       '''),
       parameters: {
-        'token': token,
+        'hashedToken': hashedToken,
       },
     );
     if (result.isEmpty) {
@@ -306,10 +308,10 @@ class PostgresDataStorage extends DataStorage {
       await _connection.execute(
         Sql.named('''
           DELETE FROM auth.password_reset_tokens
-          WHERE token = @token
+          WHERE token = @hashedToken
         '''),
         parameters: {
-          'token': token,
+          'hashedToken': hashedToken,
         },
       );
       return (userId: null, expired: true);
