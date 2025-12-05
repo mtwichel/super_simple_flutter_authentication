@@ -580,19 +580,17 @@ packages:
   super_simple_authentication_hive_data_storage:
     dependency: "direct main"
     description:
-      name: super_simple_authentication_hive_data_storage
-      sha256: fe17614d6ccd974d9e060b33ac9f1d52e3b9a79fb23826d277e69c44f4c105b9
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/super_simple_authentication_hive_data_storage"
+      relative: true
+    source: path
     version: "0.0.1-dev.2"
   super_simple_authentication_postgres_data_storage:
     dependency: "direct main"
     description:
-      name: super_simple_authentication_postgres_data_storage
-      sha256: "8e203468fb7ed77d5bacbb8cc607c6462b6d4d6756b12c5e74ba5cfa48aa2e66"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.1-dev.2"
+      path: "packages/super_simple_authentication_postgres_data_storage"
+      relative: true
+    source: path
+    version: "0.0.1-dev.3"
   super_simple_authentication_toolkit:
     dependency: "direct main"
     description:
