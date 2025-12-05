@@ -64,6 +64,24 @@ abstract class DataStorage {
 
   /// Gets users by phone number.
   Future<List<User>> getUsersByPhoneNumber(String phoneNumber);
+
+  /// Creates a password reset token for a user.
+  Future<void> createPasswordResetToken({
+    required String userId,
+    required String hashedToken,
+    required String expiresAt,
+  });
+
+  /// Gets a password reset token by its token.
+  ///
+  /// Returns the user ID if the token is valid and not expired, null otherwise.
+  Future<({String? userId, bool expired})> getPasswordResetToken({
+    required String token,
+    required String now,
+  });
+
+  /// Revokes all password reset tokens for a user.
+  Future<void> revokePasswordResetTokens({required String userId});
 }
 
 /// A user.

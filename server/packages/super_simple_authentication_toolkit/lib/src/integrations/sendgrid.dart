@@ -50,4 +50,47 @@ class Sendgrid {
       }),
     );
   }
+
+  /// Sends an email using a Sendgrid dynamic template.
+  ///
+  /// [to] is the email address of the recipient.
+  /// [templateId] is the Sendgrid dynamic template ID.
+  /// [dynamicTemplateData] is a map of key-value pairs to substitute in the
+  /// template.
+  /// [from] is the email address of the sender.
+  /// [subject] is optional and can be overridden if the template has a subject.
+  ///
+  /// See https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send
+  /// for more information about Sendgrid templates.
+  Future<void> sendEmailWithTemplate({
+    required String to,
+    required String templateId,
+    required Map<String, dynamic> dynamicTemplateData,
+    required String from,
+    String? subject,
+  }) async {
+    final personalization = {
+      'to': [
+        {'email': to},
+      ],
+      'dynamic_template_data': dynamicTemplateData,
+    };
+
+    if (subject != null) {
+      personalization['subject'] = subject;
+    }
+
+    await _client.post(
+      Uri.parse('$_baseUrl/v3/mail/send'),
+      headers: {
+        'Authorization': 'Bearer $_apiKey',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'personalizations': [personalization],
+        'from': {'email': from},
+        'template_id': templateId,
+      }),
+    );
+  }
 }

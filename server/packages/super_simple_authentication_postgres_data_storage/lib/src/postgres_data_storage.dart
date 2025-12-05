@@ -261,4 +261,74 @@ class PostgresDataStorage extends DataStorage {
     }
     return result.first[1]! as String;
   }
+
+  @override
+  Future<void> createPasswordResetToken({
+    required String userId,
+    required String hashedToken,
+    required String expiresAt,
+  }) async {
+    await _connection.execute(
+      Sql.named('''
+        INSERT INTO auth.password_reset_tokens (user_id, token, expires_at)
+        VALUES (@userId, @hashedToken, @expiresAt)
+      '''),
+      parameters: {
+        'userId': userId,
+        'hashedToken': hashedToken,
+        'expiresAt': expiresAt,
+      },
+    );
+  }
+
+  @override
+  Future<({String? userId, bool expired})> getPasswordResetToken({
+    required String token,
+    required String now,
+  }) async {
+    // Hash the token before lookup since we store hashed tokens
+    final hashedToken = await hashPasswordResetToken(token);
+    final result = await _connection.execute(
+      Sql.named('''
+        SELECT user_id, expires_at
+        FROM auth.password_reset_tokens
+        WHERE token = @hashedToken
+      '''),
+      parameters: {
+        'hashedToken': hashedToken,
+      },
+    );
+    if (result.isEmpty) {
+      return (userId: null, expired: false);
+    }
+    final row = result.first;
+    final expiresAt = row[1]! as DateTime;
+    if (expiresAt.isBefore(DateTime.parse(now))) {
+      // Delete expired token
+      await _connection.execute(
+        Sql.named('''
+          DELETE FROM auth.password_reset_tokens
+          WHERE token = @hashedToken
+        '''),
+        parameters: {
+          'hashedToken': hashedToken,
+        },
+      );
+      return (userId: null, expired: true);
+    }
+    return (userId: row[0]! as String, expired: false);
+  }
+
+  @override
+  Future<void> revokePasswordResetTokens({required String userId}) async {
+    await _connection.execute(
+      Sql.named('''
+        DELETE FROM auth.password_reset_tokens
+        WHERE user_id = @userId
+      '''),
+      parameters: {
+        'userId': userId,
+      },
+    );
+  }
 }
