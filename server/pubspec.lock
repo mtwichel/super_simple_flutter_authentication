@@ -581,26 +581,26 @@ packages:
     dependency: "direct main"
     description:
       name: super_simple_authentication_hive_data_storage
-      sha256: "9bb1fd029bab70a9e6a867c07d8ab017aa9c10c0141144019eb1501482d804ec"
+      sha256: fe17614d6ccd974d9e060b33ac9f1d52e3b9a79fb23826d277e69c44f4c105b9
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.1-dev.1"
+    version: "0.0.1-dev.2"
   super_simple_authentication_postgres_data_storage:
     dependency: "direct main"
     description:
       name: super_simple_authentication_postgres_data_storage
-      sha256: "8e203468fb7ed77d5bacbb8cc607c6462b6d4d6756b12c5e74ba5cfa48aa2e66"
+      sha256: e033c2ca90ca625215b8509b1b80d8ca58379685f2c536bdecdf2578926f29ac
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.1-dev.2"
+    version: "0.0.1-dev.3"
   super_simple_authentication_toolkit:
     dependency: "direct main"
     description:
       name: super_simple_authentication_toolkit
-      sha256: "5008b4a671d27fc4ecfb72feb31cef7e1194755328fa53644145f945ea21edcf"
+      sha256: "5bf25a584ac66be00687fcb1d56a94dc41930133960e768d219f557df86606a4"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.1-dev.4"
+    version: "0.0.1-dev.5"
   term_glyph:
     dependency: transitive
     description:

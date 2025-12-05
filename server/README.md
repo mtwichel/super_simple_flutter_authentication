@@ -258,6 +258,25 @@ export SENDGRID_API_KEY=your_sendgrid_api_key
 export SENDGRID_BASE_URL=https://api.sendgrid.com  # Optional, defaults to SendGrid API
 ```
 
+##### Password Reset Email Configuration (Optional)
+
+Required for password reset functionality:
+
+```bash
+# Required: Base URL for password reset links
+export PASSWORD_RESET_BASE_URL=https://yourapp.com
+
+# Optional: Email configuration
+export PASSWORD_RESET_FROM_EMAIL=noreply@yourapp.com  # Defaults to 'noreply@online-service.com'
+export PASSWORD_RESET_FROM_NAME=Your App Name  # Defaults to 'Online Service'
+export PASSWORD_RESET_EMAIL_SUBJECT=Reset your password  # Optional custom subject
+
+# Optional: Sendgrid template support
+export PASSWORD_RESET_TEMPLATE_ID=d-1234567890abcdef  # Sendgrid dynamic template ID
+```
+
+When `PASSWORD_RESET_TEMPLATE_ID` is set, the handler will use Sendgrid dynamic templates instead of plain text emails. The template should include these variables: `resetLink`, `fromName`, `expiresInHours`.
+
 ##### SMS Service Integration (Optional)
 
 Required for SMS OTP verification. Choose one provider:

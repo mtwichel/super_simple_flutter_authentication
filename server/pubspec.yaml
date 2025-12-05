@@ -9,9 +9,9 @@ environment:
 dependencies:
   dart_frog: 1.2.4
   mason_logger: ^0.3.3
-  super_simple_authentication_hive_data_storage: 0.0.1-dev.1
-  super_simple_authentication_postgres_data_storage: 0.0.1-dev.2
-  super_simple_authentication_toolkit: 0.0.1-dev.4
+  super_simple_authentication_hive_data_storage: 0.0.1-dev.2
+  super_simple_authentication_postgres_data_storage: 0.0.1-dev.3
+  super_simple_authentication_toolkit: 0.0.1-dev.5
 
 dev_dependencies:
   json_serializable: ^6.11.1

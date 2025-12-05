@@ -1,3 +1,18 @@
+## 0.0.1-dev.5
+
+- Add password reset functionality
+  - Add `sendPasswordResetEmailHandler` for sending password reset emails via Sendgrid
+  - Add `resetPasswordHandler` for resetting passwords with secure tokens
+  - Add password reset token utilities (`createPasswordResetToken`, `hashPasswordResetToken`)
+  - Add password reset models (`PasswordResetResponse`, `PasswordResetError`)
+  - Extend `DataStorage` interface with password reset token methods:
+    - `createPasswordResetToken` - creates a hashed password reset token
+    - `getPasswordResetToken` - retrieves and validates a password reset token
+    - `revokePasswordResetTokens` - revokes all tokens for a user
+    - `updateUserPassword` - updates a user's password and salt
+  - Support for Sendgrid dynamic templates in password reset emails
+  - Security best practices: token hashing, expiration, one-time use, email enumeration prevention
+
 ## 0.0.1-dev.4
 
 - Fix CORS middleware to return 200 for OPTIONS requests

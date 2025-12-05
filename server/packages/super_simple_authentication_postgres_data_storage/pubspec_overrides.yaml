@@ -1,3 +1,0 @@
-dependency_overrides:
-  super_simple_authentication_toolkit:
-    path: ../super_simple_authentication_toolkit

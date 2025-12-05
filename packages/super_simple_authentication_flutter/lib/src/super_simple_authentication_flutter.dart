@@ -20,6 +20,8 @@ typedef EndpointPaths = ({
   String signInWithCredential,
   String signInAnonymously,
   String refreshToken,
+  String sendPasswordResetEmail,
+  String resetPassword,
 });
 
 /// Converts a Map to a type
@@ -46,6 +48,8 @@ class SuperSimpleAuthentication {
       signInWithCredential: '/sign-in/credential',
       signInAnonymously: '/sign-in/anonymously',
       refreshToken: '/refresh',
+      sendPasswordResetEmail: '/password-reset/send-email',
+      resetPassword: '/password-reset/reset',
     ),
     int? port,
     String? basePath,
@@ -323,5 +327,45 @@ class SuperSimpleAuthentication {
       throw const SignInException(SignInError.unknown);
     }
     await _setNewToken(accessToken: accessToken, refreshToken: refreshToken);
+  }
+
+  /// Sends a password reset email to the given [email].
+  ///
+  /// The email will contain a link to reset the password. This method does not
+  /// sign the user in.
+  Future<void> sendPasswordResetEmail({
+    required String email,
+  }) async {
+    await _makeRequest(
+      _endpointPaths.sendPasswordResetEmail,
+      method: 'POST',
+      body: {'email': email},
+    );
+  }
+
+  /// Resets a user's password using a password reset token.
+  ///
+  /// [token] is the password reset token from the email link.
+  /// [password] is the new password to set.
+  /// This method does not sign the user in after resetting the password.
+  Future<void> resetPassword({
+    required String token,
+    required String password,
+  }) async {
+    final {
+      'success': bool? success,
+      'error': String? error,
+    } = await _makeRequest(
+      _endpointPaths.resetPassword,
+      method: 'POST',
+      body: {'token': token, 'password': password},
+    );
+
+    if (error != null) {
+      throw PasswordResetException(PasswordResetError.values.byName(error));
+    }
+    if (success != true) {
+      throw const PasswordResetException(PasswordResetError.unknown);
+    }
   }
 }
