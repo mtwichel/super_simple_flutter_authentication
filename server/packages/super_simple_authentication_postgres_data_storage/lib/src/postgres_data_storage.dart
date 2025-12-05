@@ -331,4 +331,24 @@ class PostgresDataStorage extends DataStorage {
       },
     );
   }
+
+  @override
+  Future<void> updateUserPassword({
+    required String userId,
+    required String hashedPassword,
+    required String salt,
+  }) async {
+    await _connection.execute(
+      Sql.named('''
+        UPDATE users
+        SET password = @hashedPassword, salt = @salt
+        WHERE id = @userId
+      '''),
+      parameters: {
+        'userId': userId,
+        'hashedPassword': hashedPassword,
+        'salt': salt,
+      },
+    );
+  }
 }

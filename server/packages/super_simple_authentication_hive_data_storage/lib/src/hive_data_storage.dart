@@ -258,4 +258,22 @@ class HiveDataStorage implements DataStorage {
       await _db.delete(key);
     }
   }
+
+  @override
+  Future<void> updateUserPassword({
+    required String userId,
+    required String hashedPassword,
+    required String salt,
+  }) async {
+    final key = 'user:$userId';
+    final existingUser = _db.get(key);
+    if (existingUser == null) {
+      return;
+    }
+    await _db.put(key, {
+      ...existingUser,
+      'hashedPassword': hashedPassword,
+      'salt': salt,
+    });
+  }
 }

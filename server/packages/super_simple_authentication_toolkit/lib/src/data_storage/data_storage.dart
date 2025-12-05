@@ -82,6 +82,13 @@ abstract class DataStorage {
 
   /// Revokes all password reset tokens for a user.
   Future<void> revokePasswordResetTokens({required String userId});
+
+  /// Updates a user's password and salt.
+  Future<void> updateUserPassword({
+    required String userId,
+    required String hashedPassword,
+    required String salt,
+  });
 }
 
 /// A user.

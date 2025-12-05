@@ -209,4 +209,22 @@ class InMemoryDataStorage implements DataStorage {
       _data[key] = null;
     }
   }
+
+  @override
+  Future<void> updateUserPassword({
+    required String userId,
+    required String hashedPassword,
+    required String salt,
+  }) async {
+    final key = 'user:$userId';
+    final existingUser = _data[key];
+    if (existingUser == null) {
+      return;
+    }
+    _data[key] = {
+      ...existingUser,
+      'hashedPassword': hashedPassword,
+      'salt': salt,
+    };
+  }
 }
