@@ -596,10 +596,9 @@ packages:
   super_simple_authentication_toolkit:
     dependency: "direct main"
     description:
-      name: super_simple_authentication_toolkit
-      sha256: "5008b4a671d27fc4ecfb72feb31cef7e1194755328fa53644145f945ea21edcf"
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/super_simple_authentication_toolkit"
+      relative: true
+    source: path
     version: "0.0.1-dev.4"
   term_glyph:
     dependency: transitive

@@ -1,6 +1,6 @@
 name: super_simple_authentication_hive_data_storage
 description: A DataStorage that stores information to a Hive storage
-version: 0.0.1-dev.1
+version: 0.0.1-dev.2
 repository: https://github.com/mtwichel/super_simple_flutter_authentication/tree/main/packages/super_simple_authentication_hive_data_storage
 
 environment:
@@ -8,7 +8,7 @@ environment:
 
 dependencies:
   hive_ce: ^2.11.3
-  super_simple_authentication_toolkit: ^0.0.1-dev.1
+  super_simple_authentication_toolkit: ^0.0.1-dev.5
   uuid: ^4.5.1
 
 dev_dependencies:

@@ -16,3 +16,5 @@ coverage/
 
 # Hive data
 data/
+
+pubspec_overrides.yaml
