@@ -35,13 +35,16 @@ The toolkit offers integrations with various third-party services for sending em
 
 ### Email
 
+- **`EmailProvider` (abstract class)**: An interface defining methods for sending emails.
 - **`Sendgrid({required String apiKey, required String baseUrl})`**: A client for sending emails via the Sendgrid API. It requires a Sendgrid API key and the base URL for the Sendgrid API.
+- **`FakeEmailService({required Stdout stdout})`**: A fake email service for testing. It requires a `Stdout` object to write to the console.
 
 ### SMS
 
 - **`SmsProvider` (abstract class)**: An interface defining methods for sending SMS messages.
 - **`Textbelt({required String apiKey})`**: An implementation of `SmsProvider` that uses the Textbelt API to send SMS messages. It requires a Textbelt API key.
 - **`Twilio({required String accountSid, required String authenticationToken, required String messagingServiceSid})`**: An implementation of `SmsProvider` that uses the Twilio API to send SMS messages. It requires Twilio account SID, authentication token, and messaging service SID.
+- **`FakeSms({required Stdout stdout})`**: A fake SMS service for testing. It requires a `Stdout` object to write to the console.
 
 ### Social Sign-In
 

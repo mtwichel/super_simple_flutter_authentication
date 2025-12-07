@@ -1,6 +1,3 @@
-export 'sendgrid.dart';
-export 'sign_in_with_apple.dart';
-export 'sign_in_with_google.dart';
-export 'sms_provider.dart';
-export 'textbelt.dart';
-export 'twilio.dart';
+export '3rd_party_providers/3rd_party_providers.dart';
+export 'email/email.dart';
+export 'sms/sms.dart';

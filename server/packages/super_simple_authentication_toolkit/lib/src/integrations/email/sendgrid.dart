@@ -1,11 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart';
+import 'package:super_simple_authentication_toolkit/super_simple_authentication_toolkit.dart';
 
 /// {@template sendgrid}
 /// A client for sending emails using Sendgrid.
 /// {@endtemplate}
-class Sendgrid {
+class Sendgrid implements EmailProvider {
   /// {@macro sendgrid}
   Sendgrid({required String apiKey, required String baseUrl})
     : _apiKey = apiKey,
@@ -22,6 +23,7 @@ class Sendgrid {
   /// [subject] is the subject of the email.
   /// [body] is the body of the email.
   /// [from] is the email address of the sender.
+  @override
   Future<void> sendEmail({
     required String to,
     required String subject,
@@ -62,6 +64,7 @@ class Sendgrid {
   ///
   /// See https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send
   /// for more information about Sendgrid templates.
+  @override
   Future<void> sendEmailWithTemplate({
     required String to,
     required String templateId,
