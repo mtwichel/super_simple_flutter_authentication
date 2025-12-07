@@ -11,7 +11,6 @@ Handler sendOtpHandler({
   String fromEmail = 'noreply@online-service.com',
   String fromName = 'Online Service',
   String? emailSubject,
-  bool debugOtps = false,
 }) {
   return (context) async {
     if (context.request.method != HttpMethod.post) {
@@ -47,15 +46,11 @@ Handler sendOtpHandler({
       expiresAt: expiresAt.toIso8601String(),
     );
 
-    if (debugOtps) {
-      // If debugging, print the OTP to the console
-      // ignore: avoid_print
-      print('OTP: $otp');
-    } else if (!usingTestOtp) {
+    if (!usingTestOtp) {
       switch (type) {
         case 'email':
-          final sendgrid = context.read<Sendgrid>();
-          await sendgrid.sendEmail(
+          final emailProvider = context.read<EmailProvider>();
+          await emailProvider.sendEmail(
             to: identifier,
             subject: emailSubject ?? 'Your OTP for $fromName',
             body: 'Your OTP is $otp',

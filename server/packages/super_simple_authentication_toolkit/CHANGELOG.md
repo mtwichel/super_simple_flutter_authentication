@@ -1,3 +1,8 @@
+## 0.0.1-dev.7
+
+- Use `EmailProvider` interface instead of `Sendgrid`
+- **Breaking change**: Remove `debugOtps` parameter from `sendOtpHandler` in favor of `FakeEmailService` for testing
+
 ## 0.0.1-dev.6
 
 - Add `EmailProvider` interfaces
