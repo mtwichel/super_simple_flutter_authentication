@@ -1,6 +1,6 @@
 name: super_simple_authentication_toolkit
 description: A collection of Dart Frog functions that power the super_simple_authentication_server
-version: 0.0.1-dev.5
+version: 0.0.1-dev.6
 repository: https://github.com/mtwichel/super_simple_flutter_authentication/tree/main/packages/super_simple_authentication_toolkit
 
 environment:

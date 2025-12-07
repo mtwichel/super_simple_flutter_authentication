@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart';
-import 'package:super_simple_authentication_toolkit/src/integrations/sms_provider.dart';
+import 'package:super_simple_authentication_toolkit/src/integrations/sms/sms_provider.dart';
 
 /// {@template textbelt}
 /// A client for sending SMS messages using Textbelt.

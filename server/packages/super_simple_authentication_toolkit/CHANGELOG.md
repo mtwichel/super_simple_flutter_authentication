@@ -1,3 +1,9 @@
+## 0.0.1-dev.6
+
+- Add `EmailProvider` interfaces
+- Add `FakeEmailService` for testing
+- Add `FakeSms` for testing
+
 ## 0.0.1-dev.5
 
 - Add password reset functionality
