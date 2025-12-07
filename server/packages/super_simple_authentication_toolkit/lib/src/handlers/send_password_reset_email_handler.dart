@@ -55,7 +55,7 @@ Handler sendPasswordResetEmailHandler({
       );
 
       // Send email with reset link
-      final sendgrid = context.read<Sendgrid>();
+      final emailProvider = context.read<EmailProvider>();
       final resetLink = '$resetBaseUrl/reset-password?token=$token';
 
       if (templateId != null) {
@@ -72,7 +72,7 @@ Handler sendPasswordResetEmailHandler({
               'expiresInHours': 1,
             };
 
-        await sendgrid.sendEmailWithTemplate(
+        await emailProvider.sendEmailWithTemplate(
           to: email,
           templateId: templateId,
           dynamicTemplateData: templateData,
@@ -81,7 +81,7 @@ Handler sendPasswordResetEmailHandler({
         );
       } else {
         // Use plain text email
-        await sendgrid.sendEmail(
+        await emailProvider.sendEmail(
           to: email,
           subject: emailSubject ?? 'Reset your password for $fromName',
           body:
