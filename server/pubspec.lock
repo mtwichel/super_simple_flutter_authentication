@@ -525,10 +525,10 @@ packages:
     dependency: "direct main"
     description:
       name: super_simple_authentication_toolkit
-      sha256: "5bf25a584ac66be00687fcb1d56a94dc41930133960e768d219f557df86606a4"
+      sha256: "92efa54b61dc10a0ad35cc0659a3ba1e712cc531cd16962f92c4c164dc22c7f9"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.1-dev.5"
+    version: "0.0.1-dev.7"
   term_glyph:
     dependency: transitive
     description:

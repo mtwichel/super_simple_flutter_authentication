@@ -252,8 +252,16 @@ export APPLE_SERVICE_ID=com.yourcompany.yourapp.service  # Optional: For web/And
 
 Required for email OTP verification:
 
+**Fake**
+Prints to stdout instead of sending emails.
+
+```bash
+export EMAIL_PROVIDER=fake
+```
+
 ```bash
 # Currently supports SendGrid
+export EMAIL_PROVIDER=sendgrid
 export SENDGRID_API_KEY=your_sendgrid_api_key
 export SENDGRID_BASE_URL=https://api.sendgrid.com  # Optional, defaults to SendGrid API
 ```
@@ -281,9 +289,17 @@ When `PASSWORD_RESET_TEMPLATE_ID` is set, the handler will use Sendgrid dynamic 
 
 Required for SMS OTP verification. Choose one provider:
 
+**Fake**
+Prints to stdout instead of sending SMS.
+
+```bash
+export SMS_PROVIDER=fake
+```
+
 **Twilio**
 
 ```bash
+export SMS_PROVIDER=twilio
 export TWILIO_ACCOUNT_SID=your_twilio_account_sid
 export TWILIO_AUTH_TOKEN=your_twilio_auth_token
 export TWILIO_MESSAGING_SERVICE_SID=your_messaging_service_sid
@@ -292,6 +308,7 @@ export TWILIO_MESSAGING_SERVICE_SID=your_messaging_service_sid
 **TextBelt**
 
 ```bash
+export SMS_PROVIDER=textbelt
 export TEXTBELT_API_KEY=your_textbelt_api_key
 ```
 
