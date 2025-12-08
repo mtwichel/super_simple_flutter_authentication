@@ -93,4 +93,26 @@ Future<void> initializeDatabase(Connection connection) async {
   await connection.execute(
     '''CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON auth.password_reset_tokens(user_id)''',
   );
+
+  // Create passkey credentials table
+  await connection.execute('''
+    CREATE TABLE IF NOT EXISTS auth.passkey_credentials (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        credential_id BYTEA NOT NULL UNIQUE,
+        public_key BYTEA NOT NULL,
+        sign_count BIGINT NOT NULL DEFAULT 0,
+        user_handle BYTEA,
+        created_at TIMESTAMP DEFAULT NOW()
+    )
+  ''');
+
+  // Create indexes for passkey credentials
+  await connection.execute(
+    '''CREATE INDEX IF NOT EXISTS idx_passkey_credentials_credential_id ON auth.passkey_credentials(credential_id)''',
+  );
+
+  await connection.execute(
+    '''CREATE INDEX IF NOT EXISTS idx_passkey_credentials_user_id ON auth.passkey_credentials(user_id)''',
+  );
 }

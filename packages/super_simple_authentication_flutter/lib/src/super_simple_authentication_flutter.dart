@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+// TODO: Add passkeys package when available
+// import 'package:passkeys/passkeys.dart';
 import 'package:super_simple_authentication_flutter/super_simple_authentication_flutter.dart';
 
 const _accessTokenKey = 'accessToken';
@@ -22,6 +24,10 @@ typedef EndpointPaths = ({
   String refreshToken,
   String sendPasswordResetEmail,
   String resetPassword,
+  String passkeyRegisterOptions,
+  String passkeyRegister,
+  String passkeySignInOptions,
+  String passkeySignIn,
 });
 
 /// Converts a Map to a type
@@ -50,6 +56,10 @@ class SuperSimpleAuthentication {
       refreshToken: '/refresh',
       sendPasswordResetEmail: '/password-reset/send-email',
       resetPassword: '/password-reset/reset',
+      passkeyRegisterOptions: '/passkeys/register/options',
+      passkeyRegister: '/passkeys/register',
+      passkeySignInOptions: '/passkeys/signin/options',
+      passkeySignIn: '/passkeys/signin',
     ),
     int? port,
     String? basePath,
@@ -367,5 +377,202 @@ class SuperSimpleAuthentication {
     if (success != true) {
       throw const PasswordResetException(PasswordResetError.unknown);
     }
+  }
+
+  /// Registers a passkey for the currently authenticated user.
+  ///
+  /// The user must be signed in before calling this method.
+  Future<void> registerPasskey({
+    String? userName,
+    String? userDisplayName,
+  }) async {
+    if (!isSignedIn) {
+      throw const SignInException(SignInError.unknown);
+    }
+
+    final tokenData = this.tokenData;
+    if (tokenData == null) {
+      throw const SignInException(SignInError.unknown);
+    }
+
+    // Get registration options from server
+    final optionsResponse = await _makeRequest(
+      _endpointPaths.passkeyRegisterOptions,
+      method: 'POST',
+      body: {
+        'userId': tokenData.userId,
+        if (userName != null) 'userName': userName,
+        if (userDisplayName != null) 'userDisplayName': userDisplayName,
+      },
+    );
+
+    final options = Map<String, dynamic>.from(optionsResponse);
+
+    // TODO: Implement passkey creation using the passkeys package
+    // The passkeys package needs to be added to pubspec.yaml
+    // For now, this is a placeholder that will need to be implemented
+    throw UnimplementedError(
+      'Passkey registration requires the passkeys package. '
+      'Please add it to pubspec.yaml and implement the passkey creation logic.',
+    );
+    // Create passkey using the passkeys package
+    // final passkeys = Passkeys();
+    // final credential = await passkeys.createCredential(
+      relyingParty: options['rp'] as Map<String, dynamic>,
+      challenge: options['challenge'] as String,
+      user: options['user'] as Map<String, dynamic>,
+      pubKeyCredParams: (options['pubKeyCredParams'] as List<dynamic>?)
+              ?.map((e) => Map<String, dynamic>.from(e as Map))
+              .toList() ??
+          [],
+      timeout: options['timeout'] as int?,
+      excludeCredentials: (options['excludeCredentials'] as List<dynamic>?)
+              ?.map((e) => Map<String, dynamic>.from(e as Map))
+              .toList() ??
+          [],
+      authenticatorSelection: options['authenticatorSelection'] != null
+          ? Map<String, dynamic>.from(
+              options['authenticatorSelection'] as Map,
+            )
+          : null,
+    )
+
+    // Register the credential with the server
+    final {
+      'token': String? accessToken,
+      'refreshToken': String? refreshToken,
+      'error': String? error,
+    } = await _makeRequest(
+      _endpointPaths.passkeyRegister,
+      method: 'POST',
+      body: {
+        'attestationResponse': credential,
+      },
+    );
+
+    if (error != null) {
+      throw SignInException(SignInError.values.byName(error));
+    }
+    if (accessToken == null || refreshToken == null) {
+      throw const SignInException(SignInError.unknown);
+    }
+    await _setNewToken(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    );
+  }
+
+  /// Signs in with a passkey (usernameless flow).
+  Future<void> signInWithPasskey() async {
+    // Get sign-in options from server
+    final optionsResponse = await _makeRequest(
+      _endpointPaths.passkeySignInOptions,
+      method: 'POST',
+      body: {},
+    );
+
+    final options = Map<String, dynamic>.from(optionsResponse);
+
+    // TODO: Implement passkey authentication using the passkeys package
+    // The passkeys package needs to be added to pubspec.yaml
+    // For now, this is a placeholder that will need to be implemented
+    throw UnimplementedError(
+      'Passkey sign-in requires the passkeys package. '
+      'Please add it to pubspec.yaml and implement the passkey authentication logic.',
+    );
+    // Authenticate using the passkeys package
+    // final passkeys = Passkeys();
+    // final assertion = await passkeys.getCredential(
+    //   relyingPartyId: options['rpId'] as String,
+    //   challenge: options['challenge'] as String,
+    //   timeout: options['timeout'] as int?,
+    //   allowCredentials: (options['allowCredentials'] as List<dynamic>?)
+    //           ?.map((e) => Map<String, dynamic>.from(e as Map))
+    //           .toList() ??
+    //       [],
+    //   userVerification: options['userVerification'] as String?,
+    // );
+
+    // Verify the assertion with the server
+    final {
+      'token': String? accessToken,
+      'refreshToken': String? refreshToken,
+      'error': String? error,
+    } = await _makeRequest(
+      _endpointPaths.passkeySignIn,
+      method: 'POST',
+      body: {
+        'assertionResponse': assertion,
+      },
+    );
+
+    if (error != null) {
+      throw SignInException(SignInError.values.byName(error));
+    }
+    if (accessToken == null || refreshToken == null) {
+      throw const SignInException(SignInError.unknown);
+    }
+    await _setNewToken(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    );
+  }
+
+  /// Signs in with a passkey for a specific email (optional email-first flow).
+  Future<void> signInWithPasskeyForEmail(String? email) async {
+    // Get sign-in options from server
+    final optionsResponse = await _makeRequest(
+      _endpointPaths.passkeySignInOptions,
+      method: 'POST',
+      body: {
+        if (email != null) 'email': email,
+      },
+    );
+
+    final options = Map<String, dynamic>.from(optionsResponse);
+
+    // TODO: Implement passkey authentication using the passkeys package
+    // The passkeys package needs to be added to pubspec.yaml
+    // For now, this is a placeholder that will need to be implemented
+    throw UnimplementedError(
+      'Passkey sign-in requires the passkeys package. '
+      'Please add it to pubspec.yaml and implement the passkey authentication logic.',
+    );
+    // Authenticate using the passkeys package
+    // final passkeys = Passkeys();
+    // final assertion = await passkeys.getCredential(
+    //   relyingPartyId: options['rpId'] as String,
+    //   challenge: options['challenge'] as String,
+    //   timeout: options['timeout'] as int?,
+    //   allowCredentials: (options['allowCredentials'] as List<dynamic>?)
+    //           ?.map((e) => Map<String, dynamic>.from(e as Map))
+    //           .toList() ??
+    //       [],
+    //   userVerification: options['userVerification'] as String?,
+    // );
+
+    // Verify the assertion with the server
+    final {
+      'token': String? accessToken,
+      'refreshToken': String? refreshToken,
+      'error': String? error,
+    } = await _makeRequest(
+      _endpointPaths.passkeySignIn,
+      method: 'POST',
+      body: {
+        'assertionResponse': assertion,
+      },
+    );
+
+    if (error != null) {
+      throw SignInException(SignInError.values.byName(error));
+    }
+    if (accessToken == null || refreshToken == null) {
+      throw const SignInException(SignInError.unknown);
+    }
+    await _setNewToken(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    );
   }
 }

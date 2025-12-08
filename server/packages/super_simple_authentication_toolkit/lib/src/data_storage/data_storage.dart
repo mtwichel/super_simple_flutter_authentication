@@ -89,6 +89,36 @@ abstract class DataStorage {
     required String hashedPassword,
     required String salt,
   });
+
+  /// Creates a new passkey credential for a user.
+  Future<void> createPasskeyCredential({
+    required String userId,
+    required List<int> credentialId,
+    required List<int> publicKey,
+    required int signCount,
+    List<int>? userHandle,
+  });
+
+  /// Gets a passkey credential by its credential ID.
+  Future<PasskeyCredential?> getPasskeyCredentialByCredentialId({
+    required List<int> credentialId,
+  });
+
+  /// Gets all passkey credentials for a user.
+  Future<List<PasskeyCredential>> getPasskeyCredentialsByUserId({
+    required String userId,
+  });
+
+  /// Updates the sign count for a passkey credential.
+  Future<void> updatePasskeySignCount({
+    required List<int> credentialId,
+    required int signCount,
+  });
+
+  /// Deletes a passkey credential.
+  Future<void> deletePasskeyCredential({
+    required List<int> credentialId,
+  });
 }
 
 /// A user.
@@ -98,4 +128,14 @@ typedef User = ({
   String? phoneNumber,
   String? hashedPassword,
   String? salt,
+});
+
+/// A passkey credential.
+typedef PasskeyCredential = ({
+  String id,
+  String userId,
+  List<int> credentialId,
+  List<int> publicKey,
+  int signCount,
+  List<int>? userHandle,
 });

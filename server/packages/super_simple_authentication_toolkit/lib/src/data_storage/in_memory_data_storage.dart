@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:super_simple_authentication_toolkit/super_simple_authentication_toolkit.dart';
 import 'package:uuid/uuid.dart';
 
@@ -226,5 +228,107 @@ class InMemoryDataStorage implements DataStorage {
       'hashedPassword': hashedPassword,
       'salt': salt,
     };
+  }
+
+  @override
+  Future<void> createPasskeyCredential({
+    required String userId,
+    required List<int> credentialId,
+    required List<int> publicKey,
+    required int signCount,
+    List<int>? userHandle,
+  }) async {
+    final credentialIdKey = base64Url.encode(credentialId);
+    _data['passkeyCredential:$credentialIdKey'] = {
+      'userId': userId,
+      'credentialId': credentialIdKey,
+      'publicKey': base64Url.encode(publicKey),
+      'signCount': signCount,
+      if (userHandle != null) 'userHandle': base64Url.encode(userHandle),
+    };
+    // Also store index by userId
+    final userCredentials = (_data['passkeyCredentialsByUser:$userId']?['credentials'] as List<dynamic>?)?.cast<String>().toList() ?? <String>[];
+    userCredentials.add(credentialIdKey);
+    _data['passkeyCredentialsByUser:$userId'] = {'credentials': userCredentials};
+  }
+
+  @override
+  Future<PasskeyCredential?> getPasskeyCredentialByCredentialId({
+    required List<int> credentialId,
+  }) async {
+    final credentialIdKey = base64Url.encode(credentialId);
+    final credentialData = _data['passkeyCredential:$credentialIdKey'];
+    if (credentialData == null) {
+      return null;
+    }
+    return (
+      id: credentialIdKey,
+      userId: credentialData['userId'] as String,
+      credentialId: credentialId,
+      publicKey: base64Url.decode(credentialData['publicKey'] as String).toList(),
+      signCount: credentialData['signCount'] as int,
+      userHandle: credentialData['userHandle'] != null
+          ? base64Url.decode(credentialData['userHandle'] as String).toList()
+          : null,
+    );
+  }
+
+  @override
+  Future<List<PasskeyCredential>> getPasskeyCredentialsByUserId({
+    required String userId,
+  }) async {
+    final credentialIds = (_data['passkeyCredentialsByUser:$userId']?['credentials'] as List<dynamic>?)?.cast<String>() ?? <String>[];
+    final credentials = <PasskeyCredential>[];
+    for (final credentialIdKey in credentialIds) {
+      final credentialData = _data['passkeyCredential:$credentialIdKey'];
+      if (credentialData != null) {
+        credentials.add(
+          (
+            id: credentialIdKey,
+            userId: credentialData['userId'] as String,
+            credentialId: base64Url.decode(credentialIdKey).toList(),
+            publicKey: base64Url.decode(credentialData['publicKey'] as String).toList(),
+            signCount: credentialData['signCount'] as int,
+            userHandle: credentialData['userHandle'] != null
+                ? base64Url.decode(credentialData['userHandle'] as String).toList()
+                : null,
+          ),
+        );
+      }
+    }
+    return credentials;
+  }
+
+  @override
+  Future<void> updatePasskeySignCount({
+    required List<int> credentialId,
+    required int signCount,
+  }) async {
+    final credentialIdKey = base64Url.encode(credentialId);
+    final credentialData = _data['passkeyCredential:$credentialIdKey'];
+    if (credentialData == null) {
+      return;
+    }
+    _data['passkeyCredential:$credentialIdKey'] = {
+      ...credentialData,
+      'signCount': signCount,
+    };
+  }
+
+  @override
+  Future<void> deletePasskeyCredential({
+    required List<int> credentialId,
+  }) async {
+    final credentialIdKey = base64Url.encode(credentialId);
+    final credentialData = _data['passkeyCredential:$credentialIdKey'];
+    if (credentialData == null) {
+      return;
+    }
+    final userId = credentialData['userId'] as String;
+    _data['passkeyCredential:$credentialIdKey'] = null;
+    // Remove from user index
+    final userCredentials = (_data['passkeyCredentialsByUser:$userId']?['credentials'] as List<dynamic>?)?.cast<String>().toList() ?? <String>[];
+    userCredentials.remove(credentialIdKey);
+    _data['passkeyCredentialsByUser:$userId'] = {'credentials': userCredentials};
   }
 }

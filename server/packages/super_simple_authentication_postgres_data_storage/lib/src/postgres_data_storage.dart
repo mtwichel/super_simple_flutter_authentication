@@ -1,3 +1,4 @@
+import 'package:postgres/postgres.dart';
 import 'package:super_simple_authentication_postgres_data_storage/super_simple_authentication_postgres_data_storage.dart';
 import 'package:super_simple_authentication_toolkit/super_simple_authentication_toolkit.dart';
 
@@ -348,6 +349,118 @@ class PostgresDataStorage extends DataStorage {
         'userId': userId,
         'hashedPassword': hashedPassword,
         'salt': salt,
+      },
+    );
+  }
+
+  @override
+  Future<void> createPasskeyCredential({
+    required String userId,
+    required List<int> credentialId,
+    required List<int> publicKey,
+    required int signCount,
+    List<int>? userHandle,
+  }) async {
+    await _connection.execute(
+      Sql.named('''
+        INSERT INTO auth.passkey_credentials (user_id, credential_id, public_key, sign_count, user_handle)
+        VALUES (@userId, @credentialId, @publicKey, @signCount, @userHandle)
+      '''),
+      parameters: {
+        'userId': userId,
+        'credentialId': credentialId,
+        'publicKey': publicKey,
+        'signCount': signCount,
+        'userHandle': userHandle,
+      },
+    );
+  }
+
+  @override
+  Future<PasskeyCredential?> getPasskeyCredentialByCredentialId({
+    required List<int> credentialId,
+  }) async {
+    final result = await _connection.execute(
+      Sql.named('''
+        SELECT id, user_id, credential_id, public_key, sign_count, user_handle
+        FROM auth.passkey_credentials
+        WHERE credential_id = @credentialId
+      '''),
+      parameters: {
+        'credentialId': credentialId,
+      },
+    );
+    if (result.isEmpty) {
+      return null;
+    }
+    final row = result.first;
+    return (
+      id: row[0]! as String,
+      userId: row[1]! as String,
+      credentialId: row[2]! as List<int>,
+      publicKey: row[3]! as List<int>,
+      signCount: row[4]! as int,
+      userHandle: row[5] as List<int>?,
+    );
+  }
+
+  @override
+  Future<List<PasskeyCredential>> getPasskeyCredentialsByUserId({
+    required String userId,
+  }) async {
+    final result = await _connection.execute(
+      Sql.named('''
+        SELECT id, user_id, credential_id, public_key, sign_count, user_handle
+        FROM auth.passkey_credentials
+        WHERE user_id = @userId
+      '''),
+      parameters: {
+        'userId': userId,
+      },
+    );
+    return result
+        .map(
+          (row) => (
+            id: row[0]! as String,
+            userId: row[1]! as String,
+            credentialId: row[2]! as List<int>,
+            publicKey: row[3]! as List<int>,
+            signCount: row[4]! as int,
+            userHandle: row[5] as List<int>?,
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<void> updatePasskeySignCount({
+    required List<int> credentialId,
+    required int signCount,
+  }) async {
+    await _connection.execute(
+      Sql.named('''
+        UPDATE auth.passkey_credentials
+        SET sign_count = @signCount
+        WHERE credential_id = @credentialId
+      '''),
+      parameters: {
+        'credentialId': credentialId,
+        'signCount': signCount,
+      },
+    );
+  }
+
+  @override
+  Future<void> deletePasskeyCredential({
+    required List<int> credentialId,
+  }) async {
+    await _connection.execute(
+      Sql.named('''
+        DELETE FROM auth.passkey_credentials
+        WHERE credential_id = @credentialId
+      '''),
+      parameters: {
+        'credentialId': credentialId,
       },
     );
   }

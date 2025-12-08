@@ -13,6 +13,8 @@ dependencies:
     sdk: flutter
   flutter_secure_storage: ^9.2.4
   http: ^1.5.0
+  # TODO: Add passkeys package when available
+  # passkeys: ^0.1.0
 
 dev_dependencies:
   flutter_test:

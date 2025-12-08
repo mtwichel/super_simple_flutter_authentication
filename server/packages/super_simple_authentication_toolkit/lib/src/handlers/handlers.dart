@@ -1,4 +1,8 @@
 export 'create_account_handler.dart';
+export 'passkey_register_handler.dart';
+export 'passkey_register_options_handler.dart';
+export 'passkey_signin_handler.dart';
+export 'passkey_signin_options_handler.dart';
 export 'refresh_token_handler.dart';
 export 'reset_password_handler.dart';
 export 'send_otp_handler.dart';
