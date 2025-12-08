@@ -9,6 +9,7 @@ Handler middleware(Handler handler) {
   return handler
       .use(requestLogger())
       .use(rateLimitMiddleware())
+      .use(provider<Now>((_) => DateTime.now()))
       .use(provider((_) => dataStorage))
       .use(provider((_) => logger))
       .use(apiKeyMiddleware(apiKey: Platform.environment['API_KEY']))
