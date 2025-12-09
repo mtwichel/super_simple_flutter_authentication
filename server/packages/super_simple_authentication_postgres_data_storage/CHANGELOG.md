@@ -1,3 +1,7 @@
+## 0.0.1-dev.4
+
+- Fix nullable password and salt fields in `User` type
+
 ## 0.0.1-dev.3
 
 - Add password reset functionality
