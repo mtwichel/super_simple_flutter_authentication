@@ -198,9 +198,9 @@ class PostgresDataStorage extends DataStorage {
         .map(
           (row) => (
             id: row[0]! as String,
-            email: row[1]! as String,
-            hashedPassword: row[2]! as String,
-            salt: row[3]! as String,
+            email: row[1]! as String?,
+            hashedPassword: row[2] as String?,
+            salt: row[3] as String?,
             phoneNumber: null,
           ),
         )
@@ -225,8 +225,8 @@ class PostgresDataStorage extends DataStorage {
             id: row[0]! as String,
             email: null,
             phoneNumber: row[1]! as String,
-            hashedPassword: row[2]! as String,
-            salt: row[3]! as String,
+            hashedPassword: row[2] as String?,
+            salt: row[3] as String?,
           ),
         )
         .toList();
