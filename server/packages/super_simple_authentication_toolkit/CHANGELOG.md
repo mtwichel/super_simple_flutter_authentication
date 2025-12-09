@@ -1,3 +1,7 @@
+## 0.0.1-dev.8
+
+- Add `expiresAt` and `expiresIn` to `sendOtpHandler` response
+
 ## 0.0.1-dev.7
 
 - Use `EmailProvider` interface instead of `Sendgrid`

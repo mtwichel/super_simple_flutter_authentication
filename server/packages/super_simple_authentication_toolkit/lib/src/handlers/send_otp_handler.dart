@@ -66,7 +66,11 @@ Handler sendOtpHandler({
     }
 
     return Response.json(
-      body: {'expiresAt': expiresAt, 'expiresIn': otpExpiration, 'error': null},
+      body: {
+        'expiresAt': expiresAt.toIso8601String(),
+        'expiresInSeconds': otpExpiration.inSeconds,
+        'error': null,
+      },
     );
   };
 }
