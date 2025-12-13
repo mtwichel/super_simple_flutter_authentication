@@ -257,13 +257,33 @@ Prints to stdout instead of sending emails.
 
 ```bash
 export EMAIL_PROVIDER=fake
+export EMAIL_FROM_EMAIL=noreply@yourapp.com
+export EMAIL_FROM_NAME=Your App Name
 ```
 
+**SendGrid**
+
 ```bash
-# Currently supports SendGrid
 export EMAIL_PROVIDER=sendgrid
 export SENDGRID_API_KEY=your_sendgrid_api_key
 export SENDGRID_BASE_URL=https://api.sendgrid.com  # Optional, defaults to SendGrid API
+export EMAIL_FROM_EMAIL=noreply@yourapp.com
+export EMAIL_FROM_NAME=Your App Name
+```
+
+**SMTP**
+
+```bash
+export EMAIL_PROVIDER=smtp
+export SMTP_HOST=smtp.yourmailserver.com
+export SMTP_PORT=587
+export SMTP_USERNAME=your_username
+export SMTP_PASSWORD=your_password
+export SMTP_USE_SSL=true
+export SMTP_ALLOW_INSECURE=false
+export SMTP_NAME=Your App Name
+export EMAIL_FROM_EMAIL=noreply@yourapp.com
+export EMAIL_FROM_NAME=Your App Name
 ```
 
 ##### Password Reset Email Configuration (Optional)

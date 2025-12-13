@@ -1,3 +1,7 @@
+## 0.0.1-dev.10
+
+- Fixed `sendOtpHandler` to use `fromEmail` and `fromName` from environment variables
+
 ## 0.0.1-dev.9
 
 - Add `SmtpEmailProvider` for sending emails via SMTP

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart';
 import 'package:super_simple_authentication_toolkit/super_simple_authentication_toolkit.dart';
@@ -29,8 +30,9 @@ class Sendgrid implements EmailProvider {
     required String subject,
     required String body,
     required String from,
+    String? fromName,
   }) async {
-    await _client.post(
+    final response = await _client.post(
       Uri.parse('$_baseUrl/v3/mail/send'),
       headers: {
         'Authorization': 'Bearer $_apiKey',
@@ -45,12 +47,22 @@ class Sendgrid implements EmailProvider {
             'subject': subject,
           },
         ],
-        'from': {'email': from},
+        'from': {
+          'email': from,
+          if (fromName != null) 'name': fromName,
+        },
         'content': [
           {'type': 'text/plain', 'value': body},
         ],
       }),
     );
+
+    if (response.statusCode != 202) {
+      stderr.writeln(
+        '''[SENDGRID] Failed to send email to $to with status code ${response.statusCode}:\n${response.body}''',
+      );
+      throw Exception('Failed to send email to $to');
+    }
   }
 
   /// Sends an email using a Sendgrid dynamic template.
@@ -71,6 +83,7 @@ class Sendgrid implements EmailProvider {
     required Map<String, dynamic> dynamicTemplateData,
     required String from,
     String? subject,
+    String? fromName,
   }) async {
     final personalization = {
       'to': [
@@ -91,7 +104,10 @@ class Sendgrid implements EmailProvider {
       },
       body: jsonEncode({
         'personalizations': [personalization],
-        'from': {'email': from},
+        'from': {
+          'email': from,
+          if (fromName != null) 'name': fromName,
+        },
         'template_id': templateId,
       }),
     );

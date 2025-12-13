@@ -8,9 +8,12 @@ const otpExpiration = Duration(minutes: 10);
 
 /// A handler for sending an OTP.
 Handler sendOtpHandler({
-  String fromEmail = 'noreply@online-service.com',
-  String fromName = 'Online Service',
+  required String fromEmail,
+  String? fromName,
   String? emailSubject,
+  String? testingEmail,
+  String? testingPhoneNumber,
+  String? testingOtp,
 }) {
   return (context) async {
     if (context.request.method != HttpMethod.post) {
@@ -23,11 +26,6 @@ Handler sendOtpHandler({
     final dataStorage = context.read<DataStorage>();
 
     await dataStorage.revokeOtpsFor(identifier: identifier, channel: type);
-
-    final environment = context.read<Environment>();
-    final testingEmail = environment['TESTING_EMAIL'];
-    final testingPhoneNumber = environment['TESTING_PHONE_NUMBER'];
-    final testingOtp = environment['TESTING_OTP'];
 
     final usingTestOtp =
         (identifier == testingEmail || identifier == testingPhoneNumber) &&
@@ -52,9 +50,10 @@ Handler sendOtpHandler({
           final emailProvider = context.read<EmailProvider>();
           await emailProvider.sendEmail(
             to: identifier,
-            subject: emailSubject ?? 'Your OTP for $fromName',
+            subject: emailSubject ?? 'Your One-Time passcode for $fromName',
             body: 'Your OTP is $otp',
             from: fromEmail,
+            fromName: fromName,
           );
         case 'phone':
           final smsProvider = context.read<SmsProvider>();
