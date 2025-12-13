@@ -19,12 +19,14 @@ class FakeEmailService implements EmailProvider {
     required String subject,
     required String body,
     required String from,
+    String? fromName,
   }) async {
     _stdout.writeln(
       '''
 Sending email
 [TO] $to
 [FROM] $from
+[FROM NAME] $fromName
 [SUBJECT] $subject
 $body''',
     );
@@ -37,6 +39,7 @@ $body''',
     required Map<String, dynamic> dynamicTemplateData,
     required String from,
     String? subject,
+    String? fromName,
   }) async {
     _stdout.writeln(
       '''
@@ -44,6 +47,7 @@ Sending email
 [TO] $to
 [FROM] $from
 [SUBJECT] $subject
+[FROM NAME] $fromName
 [TEMPLATE ID] $templateId
 $dynamicTemplateData''',
     );
