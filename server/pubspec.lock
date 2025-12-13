@@ -548,10 +548,11 @@ packages:
   super_simple_authentication_toolkit:
     dependency: "direct main"
     description:
-      path: "packages/super_simple_authentication_toolkit"
-      relative: true
-    source: path
-    version: "0.0.1-dev.8"
+      name: super_simple_authentication_toolkit
+      sha256: "158ccf8a5954d2ba31179dc1f28ee2348a699664f3d90120626bbf4c0fec9422"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1-dev.9"
   term_glyph:
     dependency: transitive
     description:
