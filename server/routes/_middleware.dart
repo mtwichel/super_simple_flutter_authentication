@@ -21,6 +21,16 @@ Handler middleware(Handler handler) {
               apiKey: Platform.environment['SENDGRID_API_KEY']!,
               baseUrl: Platform.environment['SENDGRID_BASE_URL']!,
             ),
+            'smtp' => SmtpEmailProvider(
+              host: Platform.environment['SMTP_HOST']!,
+              port: int.parse(Platform.environment['SMTP_PORT']!),
+              username: Platform.environment['SMTP_USERNAME']!,
+              password: Platform.environment['SMTP_PASSWORD']!,
+              useSsl: Platform.environment['SMTP_USE_SSL'] != 'false',
+              allowInsecure:
+                  Platform.environment['SMTP_ALLOW_INSECURE'] == 'true',
+              name: Platform.environment['SMTP_NAME'],
+            ),
             _ =>
               throw Exception(
                 '''Invalid email provider: ${Platform.environment['EMAIL_PROVIDER']}''',

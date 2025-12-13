@@ -1,3 +1,7 @@
+## 0.0.1-dev.9
+
+- Add `SmtpEmailProvider` for sending emails via SMTP
+
 ## 0.0.1-dev.8
 
 - Add `expiresAt` and `expiresIn` to `sendOtpHandler` response
