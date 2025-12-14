@@ -77,7 +77,7 @@ Handler sendPasswordResetEmailHandler({
           templateId: templateId,
           dynamicTemplateData: templateData,
           from: fromEmail,
-          subject: emailSubject,
+          subject: emailSubject ?? 'Reset your password for $fromName',
         );
       } else {
         // Use plain text email

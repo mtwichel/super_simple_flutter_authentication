@@ -66,9 +66,10 @@ class SmtpEmailProvider implements EmailProvider {
     required String subject,
     required String body,
     required String from,
+    String? fromName,
   }) async {
     final message = Message()
-      ..from = Address(from)
+      ..from = Address(from, fromName)
       ..recipients.add(to)
       ..subject = subject
       ..text = body;
@@ -91,6 +92,7 @@ class SmtpEmailProvider implements EmailProvider {
     required Map<String, dynamic> dynamicTemplateData,
     required String from,
     String? subject,
+    String? fromName,
   }) async {
     throw UnimplementedError(
       'SMTP does not support dynamic templates. '

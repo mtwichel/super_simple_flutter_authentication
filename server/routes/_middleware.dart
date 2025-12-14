@@ -19,7 +19,9 @@ Handler middleware(Handler handler) {
             'fake' => FakeEmailService(stdout: stdout),
             'sendgrid' => Sendgrid(
               apiKey: Platform.environment['SENDGRID_API_KEY']!,
-              baseUrl: Platform.environment['SENDGRID_BASE_URL']!,
+              baseUrl:
+                  Platform.environment['SENDGRID_BASE_URL'] ??
+                  'https://api.sendgrid.com',
             ),
             'smtp' => SmtpEmailProvider(
               host: Platform.environment['SMTP_HOST']!,

@@ -8,6 +8,7 @@ abstract class EmailProvider {
     required String subject,
     required String body,
     required String from,
+    String? fromName,
   });
 
   /// Sends an email using a Sendgrid dynamic template.
@@ -16,6 +17,7 @@ abstract class EmailProvider {
     required String templateId,
     required Map<String, dynamic> dynamicTemplateData,
     required String from,
-    String? subject,
+    required String subject,
+    String? fromName,
   });
 }
